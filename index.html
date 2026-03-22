@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025–26 NBA Standings Race</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0b0f1a;
+            --bg-card: rgba(255,255,255,0.03);
+            --bg-card-hover: rgba(255,255,255,0.07);
+            --border-subtle: rgba(255,255,255,0.06);
+            --text-primary: #f0f0f0;
+            --text-secondary: #8a8fa8;
+            --text-muted: #4a4f68;
+            --accent-gold: #d4a843;
+            --accent-blue: #3b82f6;
+            --playoff-green: #22c55e;
+            --playin-amber: #f59e0b;
+            --eliminated-red: #ef4444;
+            --row-height: 52px;
+            --glow-gold: rgba(212,168,67,0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Atmospheric background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background:
+                radial-gradient(ellipse at 20% 0%, rgba(59,130,246,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(212,168,67,0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(15,20,35,1) 0%, transparent 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-wrapper {
+            position: relative;
+            z-index: 1;
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 40px 24px 60px;
+        }
+
+        /* ── Header ── */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .league-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, rgba(212,168,67,0.12), rgba(212,168,67,0.04));
+            border: 1px solid rgba(212,168,67,0.2);
+            border-radius: 100px;
+            padding: 6px 18px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--accent-gold);
+            margin-bottom: 20px;
+        }
+
+        .league-badge::before {
+            content: '';
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--accent-gold);
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        .title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(48px, 8vw, 72px);
+            line-height: 0.9;
+            letter-spacing: 2px;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .title span {
+            display: block;
+            font-size: 0.45em;
+            letter-spacing: 6px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .date-display {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 28px;
+            letter-spacing: 3px;
+            color: var(--accent-gold);
+            margin-top: 16px;
+            transition: opacity 0.2s;
+        }
+
+        /* ── Controls ── */
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .conf-tabs {
+            display: flex;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 4px;
+            gap: 2px;
+        }
+
+        .conf-tab {
+            font-family: 'DM Sans', sans-serif;
+            padding: 10px 22px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.25s ease;
+        }
+
+        .conf-tab.active {
+            background: rgba(255,255,255,0.08);
+            color: var(--text-primary);
+            box-shadow: 0 1px 8px rgba(0,0,0,0.3);
+        }
+
+        .conf-tab:hover:not(.active) {
+            color: var(--text-secondary);
+        }
+
+        .divider {
+            width: 1px;
+            height: 28px;
+            background: var(--border-subtle);
+        }
+
+        .playback {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ctrl-btn {
+            font-family: 'DM Sans', sans-serif;
+            width: 38px; height: 38px;
+            border: 1px solid var(--border-subtle);
+            background: rgba(255,255,255,0.03);
+            color: var(--text-secondary);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            display: grid;
+            place-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .ctrl-btn:hover {
+            background: rgba(255,255,255,0.08);
+            color: var(--text-primary);
+            border-color: rgba(255,255,255,0.12);
+        }
+
+        .ctrl-btn.play-btn {
+            width: 44px; height: 44px;
+            background: var(--accent-gold);
+            border-color: var(--accent-gold);
+            color: var(--bg-primary);
+            font-size: 16px;
+            border-radius: 12px;
+        }
+
+        .ctrl-btn.play-btn:hover {
+            background: #e0b44f;
+            border-color: #e0b44f;
+            color: var(--bg-primary);
+            box-shadow: 0 4px 20px rgba(212,168,67,0.3);
+        }
+
+        .speed-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .speed-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .speed-slider {
+            width: 70px;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255,255,255,0.1);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .speed-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .speed-slider::-webkit-slider-thumb:hover {
+            background: var(--text-primary);
+        }
+
+        /* ── Standings Board ── */
+        .board {
+            position: relative;
+            border-radius: 16px;
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .board-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px 12px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .board-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 16px;
+            letter-spacing: 3px;
+            color: var(--text-muted);
+        }
+
+        .board-legend {
+            display: flex;
+            gap: 16px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .legend-dot {
+            width: 8px; height: 8px;
+            border-radius: 2px;
+        }
+
+        .legend-dot.playoffs { background: var(--playoff-green); }
+        .legend-dot.playin { background: var(--playin-amber); }
+        .legend-dot.lottery { background: var(--eliminated-red); opacity: 0.6; }
+
+        .standings-area {
+            position: relative;
+            padding: 8px 0;
+        }
+
+        /* Cutlines between zones */
+        .cutline {
+            position: absolute;
+            left: 0; right: 0;
+            height: 1px;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .cutline-playoff {
+            top: calc(8px + 6 * var(--row-height));
+            background: rgba(255,255,255,0.08);
+        }
+
+        .cutline-playin {
+            top: calc(8px + 10 * var(--row-height));
+            background: rgba(255,255,255,0.08);
+        }
+
+        .standings-rows {
+            position: relative;
+            height: calc(15 * var(--row-height));
+        }
+
+        /* ── Team Row ── */
+        .team-row {
+            position: absolute;
+            width: 100%;
+            height: var(--row-height);
+            display: flex;
+            align-items: center;
+            padding: 0 20px 0 24px;
+            transition: top 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+            cursor: default;
+        }
+
+        .team-row::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 20px; right: 20px;
+            height: 1px;
+            background: var(--border-subtle);
+        }
+
+        .team-row:hover {
+            background: var(--bg-card-hover);
+        }
+
+        /* Zone indicator — colored bar on the left edge */
+        .zone-indicator {
+            position: absolute;
+            left: 0;
+            top: 8px;
+            bottom: 8px;
+            width: 3px;
+            border-radius: 0 2px 2px 0;
+            transition: background 0.3s;
+        }
+
+        .zone-indicator.zone-playoff { background: var(--playoff-green); }
+        .zone-indicator.zone-playin { background: var(--playin-amber); }
+        .zone-indicator.zone-lottery { background: transparent; }
+
+        .rank {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 20px;
+            width: 32px;
+            text-align: center;
+            flex-shrink: 0;
+            transition: color 0.3s;
+        }
+
+        .rank.top-3 { color: var(--playoff-green); }
+        .rank.playoff { color: var(--playoff-green); }
+        .rank.playin { color: var(--playin-amber); }
+        .rank.lottery { color: var(--text-muted); }
+
+        .team-logo {
+            width: 32px; height: 32px;
+            object-fit: contain;
+            flex-shrink: 0;
+            margin: 0 14px 0 10px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+            transition: transform 0.2s;
+        }
+
+        .team-row:hover .team-logo {
+            transform: scale(1.1);
+        }
+
+        .team-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+            white-space: nowrap;
+        }
+
+        .team-abbr {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 14px;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-left: 8px;
+        }
+
+        /* ── Timeline ── */
+        .timeline {
+            padding: 0 4px;
+            margin-bottom: 20px;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .timeline-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .date-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.06);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .date-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: var(--accent-gold);
+            cursor: pointer;
+            box-shadow: 0 0 0 4px rgba(212,168,67,0.15), 0 2px 8px rgba(0,0,0,0.3);
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+
+        .date-slider::-webkit-slider-thumb:hover {
+            box-shadow: 0 0 0 6px rgba(212,168,67,0.2), 0 4px 16px rgba(0,0,0,0.4);
+            transform: scale(1.1);
+        }
+
+        .date-slider::-moz-range-thumb {
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: var(--accent-gold);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 0 4px rgba(212,168,67,0.15), 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 640px) {
+            .page-wrapper { padding: 24px 12px 40px; }
+            .title { font-size: 42px; }
+            .controls { gap: 8px; }
+            .conf-tab { padding: 8px 14px; font-size: 12px; }
+            .team-name { min-width: 140px; font-size: 13px; }
+            .team-abbr { display: none; }
+            .board-legend { display: none; }
+            .board-header { padding: 12px 16px 10px; }
+            .team-row { padding: 0 12px 0 16px; }
+        }
+
+        /* ── Load animation ── */
+        @keyframes fade-up {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header { animation: fade-up 0.6s ease-out; }
+        .controls { animation: fade-up 0.6s ease-out 0.1s both; }
+        .board { animation: fade-up 0.6s ease-out 0.2s both; }
+        .timeline { animation: fade-up 0.6s ease-out 0.3s both; }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <header class="header">
+            <div class="league-badge">2025 – 26 Season</div>
+            <div class="title">
+                NBA Standings
+                <span>Race</span>
+            </div>
+            <div class="date-display" id="dateDisplay">Oct 22, 2025</div>
+        </header>
+
+        <div class="controls">
+            <div class="conf-tabs">
+                <button class="conf-tab active" data-conference="east">East</button>
+                <button class="conf-tab" data-conference="west">West</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="playback">
+                <button class="ctrl-btn" id="backBtn" title="Previous">◀◀</button>
+                <button class="ctrl-btn play-btn" id="playBtn" title="Play">▶</button>
+                <button class="ctrl-btn" id="forwardBtn" title="Next">▶▶</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="speed-group">
+                <span class="speed-label">Speed</span>
+                <input type="range" id="speedSlider" class="speed-slider" min="0.25" max="3" step="0.25" value="1">
+            </div>
+        </div>
+
+        <div class="board">
+            <div class="board-header">
+                <div class="board-title" id="boardTitle">Eastern Conference</div>
+                <div class="board-legend">
+                    <div class="legend-item"><div class="legend-dot playoffs"></div>Playoffs</div>
+                    <div class="legend-item"><div class="legend-dot playin"></div>Play-In</div>
+                </div>
+            </div>
+            <div class="standings-area">
+                <div class="cutline cutline-playoff"></div>
+                <div class="cutline cutline-playin"></div>
+                <div class="standings-rows" id="standingsRows"></div>
+            </div>
+        </div>
+
+        <div class="timeline">
+            <div class="timeline-header">
+                <span class="timeline-label">Timeline</span>
+                <span class="timeline-label" id="timelineProgress">Day 1</span>
+            </div>
+            <input type="range" id="dateSlider" class="date-slider" min="0" max="100" value="0">
+        </div>
+
+        <div class="footer">Data sourced from NBA.com &middot; Visualization by Claude</div>
+    </div>
+
+    <script>
+        const eastData = [
+            ["Oct 22, 2025","CHI","CHO","MIL","NYK","ORL","PHI","TOR","ATL","BOS","BRK","CLE","DET","MIA","WAS"],
+            ["Oct 23, 2025","CHI","CHO","MIL","NYK","ORL","PHI","TOR","ATL","BOS","BRK","CLE","DET","IND","MIA","WAS"],
+            ["Oct 24, 2025","MIL","NYK","CHI","CHO","PHI","ATL","CLE","DET","MIA","ORL","TOR","WAS","BOS","BRK","IND"],
+            ["Oct 25, 2025","CHI","MIL","NYK","PHI","CHO","CLE","DET","MIA","TOR","WAS","ATL","ORL","BOS","BRK","IND"],
+            ["Oct 26, 2025","CHI","PHI","CHO","CLE","DET","MIA","MIL","NYK","ATL","ORL","TOR","WAS","BOS","BRK","IND"],
+            ["Oct 27, 2025","CHI","PHI","CLE","CHO","MIA","MIL","NYK","DET","WAS","ATL","BOS","ORL","TOR","BRK","IND"],
+            ["Oct 28, 2025","PHI","CHI","CLE","MIA","MIL","CHO","DET","NYK","ATL","BOS","ORL","TOR","WAS","BRK","IND"],
+            ["Oct 29, 2025","CHI","PHI","MIA","MIL","CLE","DET","CHO","NYK","ATL","BOS","WAS","ORL","TOR","BRK","IND"],
+            ["Oct 30, 2025","CHI","PHI","MIL","CLE","DET","MIA","NYK","ATL","BOS","CHO","ORL","TOR","WAS","BRK","IND"],
+            ["Oct 31, 2025","CHI","MIL","PHI","DET","MIA","ATL","BOS","CLE","CHO","NYK","ORL","TOR","WAS","BRK","IND"],
+            ["Nov 1, 2025","CHI","PHI","DET","MIL","MIA","ATL","CLE","BOS","ORL","NYK","CHO","TOR","IND","WAS","BRK"],
+            ["Nov 2, 2025","CHI","PHI","DET","MIL","CLE","MIA","NYK","ATL","BOS","CHO","ORL","TOR","IND","WAS","BRK"],
+            ["Nov 3, 2025","CHI","PHI","DET","MIL","CLE","MIA","NYK","ATL","CHO","ORL","TOR","BOS","IND","WAS","BRK"],
+            ["Nov 4, 2025","CHI","DET","PHI","MIL","CLE","MIA","NYK","ATL","TOR","BOS","CHO","ORL","IND","WAS","BRK"],
+            ["Nov 5, 2025","CHI","DET","CLE","MIL","NYK","PHI","ATL","MIA","TOR","BOS","CHO","ORL","BRK","IND","WAS"],
+            ["Nov 6, 2025","CHI","DET","CLE","MIL","NYK","PHI","ATL","MIA","TOR","BOS","CHO","ORL","BRK","IND","WAS"],
+            ["Nov 7, 2025","DET","CHI","CLE","MIL","NYK","PHI","MIA","TOR","ATL","ORL","BOS","CHO","IND","BRK","WAS"],
+            ["Nov 8, 2025","DET","CLE","CHI","MIL","PHI","NYK","MIA","ATL","TOR","ORL","BOS","CHO","BRK","IND","WAS"],
+            ["Nov 9, 2025","DET","CLE","CHI","NYK","MIA","MIL","PHI","ATL","TOR","BOS","ORL","CHO","BRK","IND","WAS"],
+            ["Nov 10, 2025","DET","NYK","CLE","MIA","MIL","CHI","PHI","ATL","TOR","BOS","ORL","CHO","BRK","IND","WAS"],
+            ["Nov 11, 2025","DET","NYK","CLE","MIA","MIL","PHI","CHI","ATL","TOR","ORL","BOS","CHO","BRK","IND","WAS"],
+            ["Nov 12, 2025","DET","CLE","NYK","PHI","ATL","MIA","MIL","CHI","TOR","ORL","BOS","CHO","BRK","IND","WAS"],
+            ["Nov 13, 2025","DET","NYK","PHI","ATL","CLE","MIA","MIL","TOR","CHI","ORL","BOS","CHO","BRK","IND","WAS"],
+            ["Nov 14, 2025","DET","NYK","ATL","CLE","MIL","PHI","TOR","CHI","MIA","ORL","BOS","CHO","BRK","IND","WAS"],
+            ["Nov 15, 2025","DET","NYK","CLE","ATL","TOR","PHI","MIL","CHI","MIA","ORL","BOS","CHO","BRK","WAS","IND"],
+            ["Nov 16, 2025","DET","NYK","ATL","CLE","TOR","PHI","MIL","MIA","BOS","ORL","CHI","CHO","BRK","IND","WAS"],
+            ["Nov 17, 2025","DET","CLE","ATL","TOR","NYK","PHI","MIA","CHI","MIL","BOS","ORL","CHO","BRK","WAS","IND"],
+            ["Nov 18, 2025","DET","CLE","TOR","NYK","PHI","ATL","MIA","CHI","BOS","MIL","ORL","CHO","BRK","WAS","IND"],
+            ["Nov 19, 2025","DET","TOR","NYK","CLE","ATL","MIA","CHI","PHI","BOS","MIL","ORL","CHO","BRK","IND","WAS"],
+            ["Nov 20, 2025","DET","TOR","NYK","CLE","MIA","PHI","CHI","ATL","ORL","BOS","MIL","CHO","BRK","IND","WAS"],
+            ["Nov 21, 2025","DET","TOR","CLE","NYK","MIA","PHI","ATL","ORL","CHI","BOS","MIL","CHO","BRK","IND","WAS"],
+            ["Nov 22, 2025","DET","TOR","CLE","MIA","NYK","PHI","ATL","ORL","CHI","BOS","MIL","CHO","BRK","IND","WAS"],
+            ["Nov 23, 2025","DET","TOR","CLE","MIA","ATL","NYK","CHI","PHI","ORL","BOS","MIL","CHO","BRK","IND","WAS"],
+            ["Nov 24, 2025","DET","TOR","MIA","CLE","NYK","ATL","PHI","ORL","BOS","CHI","MIL","CHO","BRK","IND","WAS"],
+            ["Nov 25, 2025","DET","TOR","MIA","CLE","NYK","ATL","ORL","BOS","CHI","PHI","MIL","CHO","BRK","IND","WAS"],
+            ["Nov 26, 2025","DET","TOR","MIA","NYK","CLE","ATL","ORL","BOS","CHI","PHI","MIL","CHO","BRK","WAS","IND"],
+            ["Nov 28, 2025","DET","TOR","MIA","NYK","ATL","CLE","ORL","BOS","PHI","CHI","MIL","CHO","BRK","IND","WAS"],
+            ["Nov 29, 2025","DET","TOR","NYK","MIA","ATL","CLE","ORL","PHI","BOS","CHI","MIL","CHO","IND","BRK","WAS"],
+            ["Nov 30, 2025","DET","NYK","TOR","MIA","ATL","ORL","CLE","BOS","PHI","CHI","MIL","CHO","IND","BRK","WAS"],
+            ["Dec 1, 2025","DET","NYK","MIA","TOR","ORL","ATL","CLE","BOS","PHI","CHI","MIL","CHO","BRK","IND","WAS"],
+            ["Dec 2, 2025","DET","TOR","MIA","NYK","ORL","ATL","CLE","BOS","PHI","CHI","MIL","CHO","BRK","IND","WAS"],
+            ["Dec 3, 2025","DET","TOR","NYK","MIA","ORL","BOS","ATL","CLE","PHI","MIL","CHI","CHO","BRK","IND","WAS"],
+            ["Dec 4, 2025","DET","NYK","TOR","MIA","BOS","ORL","PHI","ATL","CLE","MIL","CHI","CHO","BRK","IND","WAS"],
+            ["Dec 5, 2025","DET","NYK","TOR","BOS","MIA","ORL","PHI","CLE","ATL","MIL","CHI","CHO","BRK","IND","WAS"],
+            ["Dec 6, 2025","DET","NYK","TOR","BOS","ORL","PHI","MIA","ATL","CLE","CHI","MIL","CHO","BRK","IND","WAS"],
+            ["Dec 7, 2025","DET","NYK","BOS","TOR","MIA","ORL","PHI","ATL","CLE","MIL","CHI","CHO","BRK","IND","WAS"],
+            ["Dec 8, 2025","DET","NYK","BOS","TOR","MIA","ORL","PHI","ATL","CLE","MIL","CHI","CHO","BRK","IND","WAS"],
+            ["Dec 9, 2025","DET","NYK","BOS","ORL","TOR","PHI","ATL","CLE","MIA","MIL","CHI","CHO","BRK","IND","WAS"],
+            ["Dec 10, 2025","DET","NYK","BOS","ORL","TOR","PHI","ATL","CLE","MIA","MIL","CHI","CHO","BRK","IND","WAS"],
+            ["Dec 11, 2025","DET","NYK","BOS","ORL","TOR","PHI","ATL","CLE","MIA","MIL","CHI","CHO","BRK","IND","WAS"],
+            ["Dec 12, 2025","DET","NYK","BOS","ORL","PHI","CLE","TOR","MIA","ATL","MIL","CHI","CHO","BRK","IND","WAS"],
+            ["Dec 13, 2025","DET","NYK","BOS","PHI","CLE","ORL","TOR","MIA","ATL","MIL","CHI","CHO","BRK","IND","WAS"],
+            ["Dec 14, 2025","DET","NYK","BOS","ORL","TOR","MIA","PHI","ATL","CLE","MIL","CHI","CHO","BRK","IND","WAS"],
+            ["Dec 15, 2025","DET","NYK","TOR","BOS","ORL","PHI","ATL","CLE","MIA","MIL","CHI","CHO","BRK","IND","WAS"],
+            ["Dec 17, 2025","DET","NYK","TOR","BOS","ORL","PHI","ATL","MIA","CLE","CHI","MIL","CHO","BRK","IND","WAS"],
+            ["Dec 18, 2025","DET","NYK","TOR","BOS","PHI","MIA","ORL","ATL","CLE","CHI","MIL","CHO","BRK","IND","WAS"],
+            ["Dec 19, 2025","DET","NYK","TOR","BOS","PHI","ORL","MIA","ATL","CLE","CHI","MIL","CHO","BRK","IND","WAS"],
+            ["Dec 20, 2025","DET","NYK","BOS","PHI","TOR","ORL","MIA","ATL","CLE","CHI","MIL","CHO","BRK","IND","WAS"],
+            ["Dec 21, 2025","DET","NYK","BOS","PHI","ORL","TOR","CLE","MIA","ATL","CHI","MIL","CHO","BRK","IND","WAS"],
+            ["Dec 22, 2025","DET","NYK","BOS","PHI","TOR","ORL","CLE","MIA","ATL","CHI","MIL","CHO","BRK","IND","WAS"],
+            ["Dec 23, 2025","DET","NYK","BOS","TOR","PHI","ORL","CLE","MIA","ATL","CHI","MIL","CHO","BRK","IND","WAS"],
+            ["Dec 25, 2025","DET","NYK","BOS","TOR","PHI","ORL","CLE","MIA","ATL","CHI","MIL","CHO","BRK","IND","WAS"],
+            ["Dec 26, 2025","DET","NYK","BOS","TOR","PHI","ORL","CLE","MIA","CHI","ATL","MIL","CHO","BRK","WAS","IND"],
+            ["Dec 27, 2025","DET","NYK","BOS","ORL","TOR","PHI","MIA","CLE","CHI","ATL","MIL","CHO","BRK","WAS","IND"],
+            ["Dec 28, 2025","DET","NYK","BOS","TOR","ORL","PHI","MIA","CLE","CHI","ATL","MIL","CHO","BRK","WAS","IND"],
+            ["Dec 29, 2025","DET","NYK","BOS","TOR","MIA","ORL","PHI","CLE","CHI","ATL","MIL","CHO","BRK","WAS","IND"],
+            ["Dec 30, 2025","DET","NYK","BOS","TOR","PHI","MIA","ORL","CLE","CHI","ATL","MIL","CHO","BRK","WAS","IND"],
+            ["Dec 31, 2025","DET","NYK","BOS","TOR","ORL","PHI","MIA","CLE","CHI","ATL","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 1, 2026","DET","NYK","BOS","TOR","PHI","MIA","ORL","CLE","CHI","ATL","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 2, 2026","DET","NYK","BOS","TOR","PHI","MIA","CLE","ORL","CHI","ATL","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 3, 2026","DET","NYK","BOS","TOR","PHI","CLE","MIA","ORL","CHI","ATL","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 4, 2026","DET","NYK","BOS","TOR","PHI","MIA","ORL","CLE","CHI","ATL","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 5, 2026","DET","BOS","NYK","TOR","PHI","MIA","ORL","CLE","CHI","ATL","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 6, 2026","DET","BOS","NYK","TOR","PHI","CLE","MIA","ORL","CHI","ATL","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 7, 2026","DET","NYK","BOS","TOR","PHI","CLE","ORL","MIA","ATL","CHI","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 8, 2026","DET","NYK","BOS","TOR","PHI","ORL","MIA","CLE","ATL","CHI","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 9, 2026","DET","BOS","NYK","TOR","PHI","MIA","CLE","ORL","ATL","CHI","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 10, 2026","DET","BOS","NYK","TOR","PHI","CLE","ORL","MIA","ATL","CHI","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 11, 2026","DET","NYK","BOS","TOR","PHI","CLE","ORL","MIA","ATL","CHI","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 12, 2026","DET","NYK","BOS","TOR","PHI","ORL","CLE","MIA","ATL","CHI","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 13, 2026","DET","NYK","BOS","TOR","PHI","ORL","CLE","MIA","ATL","CHI","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 14, 2026","DET","NYK","BOS","TOR","PHI","ORL","CLE","MIA","ATL","CHI","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 15, 2026","DET","BOS","NYK","TOR","PHI","ORL","CLE","MIA","CHI","ATL","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 16, 2026","DET","BOS","NYK","TOR","ORL","CLE","PHI","MIA","ATL","CHI","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 17, 2026","DET","BOS","NYK","TOR","ORL","CLE","PHI","MIA","CHI","ATL","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 18, 2026","DET","BOS","NYK","TOR","CLE","PHI","ORL","MIA","CHI","ATL","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 19, 2026","DET","BOS","NYK","TOR","PHI","ORL","CLE","MIA","CHI","ATL","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 20, 2026","DET","BOS","NYK","TOR","ORL","PHI","CLE","MIA","CHI","ATL","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 21, 2026","DET","BOS","NYK","TOR","CLE","ORL","PHI","MIA","CHI","ATL","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 22, 2026","DET","BOS","NYK","TOR","PHI","CLE","ORL","MIA","CHI","ATL","MIL","CHO","BRK","WAS","IND"],
+            ["Jan 23, 2026","DET","BOS","TOR","NYK","CLE","PHI","ORL","MIA","CHI","ATL","MIL","CHO","BRK","IND","WAS"],
+            ["Jan 24, 2026","DET","BOS","NYK","TOR","CLE","PHI","ORL","MIA","CHI","ATL","MIL","CHO","BRK","IND","WAS"],
+            ["Jan 25, 2026","DET","BOS","TOR","NYK","CLE","PHI","MIA","ORL","CHI","ATL","MIL","CHO","BRK","IND","WAS"],
+            ["Jan 26, 2026","DET","BOS","TOR","NYK","CLE","PHI","MIA","ORL","CHI","ATL","MIL","CHO","BRK","IND","WAS"],
+            ["Jan 27, 2026","DET","BOS","NYK","TOR","CLE","PHI","MIA","ORL","CHI","ATL","CHO","MIL","BRK","WAS","IND"],
+            ["Jan 28, 2026","DET","BOS","NYK","CLE","TOR","PHI","ORL","MIA","ATL","CHI","CHO","MIL","BRK","IND","WAS"],
+            ["Jan 29, 2026","DET","BOS","NYK","CLE","TOR","PHI","MIA","ORL","ATL","CHI","CHO","MIL","BRK","WAS","IND"],
+            ["Jan 30, 2026","DET","BOS","NYK","CLE","TOR","PHI","ORL","MIA","ATL","CHI","CHO","MIL","BRK","WAS","IND"],
+            ["Jan 31, 2026","DET","BOS","NYK","CLE","TOR","PHI","ORL","MIA","CHI","ATL","CHO","MIL","BRK","IND","WAS"],
+            ["Feb 1, 2026","DET","BOS","NYK","CLE","TOR","PHI","MIA","ORL","CHI","ATL","CHO","MIL","BRK","WAS","IND"],
+            ["Feb 2, 2026","DET","BOS","NYK","CLE","TOR","PHI","MIA","ORL","CHI","ATL","CHO","MIL","BRK","WAS","IND"],
+            ["Feb 3, 2026","DET","BOS","NYK","CLE","TOR","PHI","MIA","ORL","ATL","CHI","CHO","MIL","BRK","WAS","IND"],
+            ["Feb 4, 2026","DET","BOS","NYK","CLE","PHI","TOR","MIA","ORL","ATL","CHI","CHO","MIL","BRK","WAS","IND"],
+            ["Feb 5, 2026","DET","BOS","NYK","CLE","TOR","PHI","ORL","MIA","ATL","CHI","CHO","MIL","WAS","BRK","IND"],
+            ["Feb 6, 2026","DET","BOS","NYK","CLE","TOR","PHI","ORL","MIA","ATL","CHI","CHO","MIL","WAS","BRK","IND"],
+            ["Feb 7, 2026","DET","BOS","NYK","CLE","TOR","PHI","ORL","MIA","ATL","CHO","CHI","MIL","BRK","WAS","IND"],
+            ["Feb 8, 2026","DET","BOS","NYK","CLE","TOR","PHI","ORL","MIA","ATL","CHO","CHI","MIL","BRK","WAS","IND"],
+            ["Feb 9, 2026","DET","BOS","NYK","CLE","TOR","PHI","ORL","MIA","ATL","CHO","CHI","MIL","BRK","WAS","IND"],
+            ["Feb 10, 2026","DET","BOS","NYK","CLE","TOR","PHI","ORL","MIA","ATL","CHO","CHI","MIL","BRK","WAS","IND"],
+            ["Feb 11, 2026","DET","BOS","NYK","CLE","TOR","PHI","ORL","MIA","CHO","ATL","CHI","MIL","BRK","IND","WAS"],
+            ["Feb 12, 2026","DET","BOS","NYK","CLE","TOR","PHI","ORL","MIA","CHO","ATL","CHI","MIL","BRK","IND","WAS"],
+            ["Feb 19, 2026","DET","BOS","CLE","NYK","TOR","PHI","ORL","MIA","ATL","CHO","MIL","CHI","BRK","WAS","IND"],
+            ["Feb 20, 2026","DET","BOS","CLE","NYK","TOR","PHI","ORL","MIA","ATL","CHO","MIL","CHI","WAS","BRK","IND"],
+            ["Feb 21, 2026","DET","BOS","CLE","NYK","TOR","PHI","MIA","ORL","ATL","CHO","MIL","CHI","WAS","BRK","IND"],
+            ["Feb 22, 2026","DET","BOS","NYK","CLE","TOR","PHI","ORL","MIA","ATL","CHO","MIL","CHI","WAS","BRK","IND"],
+            ["Feb 23, 2026","DET","BOS","NYK","CLE","TOR","PHI","ORL","MIA","ATL","CHO","MIL","CHI","WAS","BRK","IND"],
+            ["Feb 24, 2026","DET","BOS","CLE","NYK","TOR","PHI","ORL","MIA","ATL","CHO","MIL","CHI","WAS","BRK","IND"],
+            ["Feb 25, 2026","DET","BOS","NYK","CLE","TOR","PHI","ORL","MIA","ATL","CHO","MIL","CHI","WAS","BRK","IND"],
+            ["Feb 26, 2026","DET","BOS","NYK","CLE","TOR","PHI","ORL","MIA","ATL","CHO","MIL","CHI","WAS","BRK","IND"],
+            ["Feb 27, 2026","DET","BOS","NYK","CLE","TOR","PHI","ORL","MIA","ATL","CHO","MIL","CHI","WAS","BRK","IND"],
+            ["Feb 28, 2026","DET","BOS","NYK","CLE","TOR","PHI","ORL","MIA","ATL","CHO","MIL","CHI","WAS","BRK","IND"],
+            ["Mar 1, 2026","DET","BOS","NYK","CLE","TOR","PHI","ORL","MIA","ATL","CHO","MIL","CHI","WAS","BRK","IND"],
+            ["Mar 2, 2026","DET","BOS","NYK","CLE","TOR","PHI","ORL","MIA","ATL","CHO","MIL","CHI","WAS","BRK","IND"],
+            ["Mar 3, 2026","DET","BOS","NYK","CLE","TOR","PHI","ORL","MIA","ATL","CHO","MIL","CHI","WAS","BRK","IND"],
+            ["Mar 4, 2026","DET","BOS","NYK","CLE","TOR","PHI","ORL","MIA","ATL","CHO","MIL","CHI","WAS","BRK","IND"],
+            ["Mar 5, 2026","DET","BOS","NYK","CLE","TOR","PHI","ORL","MIA","ATL","CHO","MIL","CHI","WAS","BRK","IND"],
+            ["Mar 6, 2026","DET","BOS","NYK","CLE","TOR","PHI","MIA","ORL","ATL","CHO","MIL","CHI","WAS","BRK","IND"],
+            ["Mar 7, 2026","DET","BOS","NYK","CLE","TOR","ORL","MIA","PHI","ATL","CHO","MIL","CHI","WAS","BRK","IND"],
+            ["Mar 8, 2026","DET","BOS","NYK","CLE","TOR","ORL","MIA","PHI","ATL","CHO","MIL","CHI","BRK","WAS","IND"],
+            ["Mar 9, 2026","DET","BOS","NYK","CLE","TOR","ORL","MIA","PHI","ATL","CHO","MIL","CHI","BRK","WAS","IND"],
+            ["Mar 10, 2026","DET","BOS","NYK","CLE","TOR","MIA","ORL","PHI","ATL","CHO","MIL","CHI","BRK","WAS","IND"],
+            ["Mar 11, 2026","DET","BOS","NYK","CLE","ORL","MIA","TOR","PHI","ATL","CHO","MIL","CHI","BRK","WAS","IND"],
+            ["Mar 12, 2026","DET","BOS","NYK","CLE","ORL","MIA","TOR","ATL","PHI","CHO","MIL","CHI","BRK","WAS","IND"],
+            ["Mar 13, 2026","DET","BOS","NYK","CLE","ORL","MIA","TOR","ATL","PHI","CHO","MIL","CHI","BRK","WAS","IND"],
+            ["Mar 14, 2026","DET","BOS","NYK","CLE","ORL","TOR","MIA","ATL","PHI","CHO","MIL","CHI","BRK","WAS","IND"],
+            ["Mar 15, 2026","DET","BOS","NYK","CLE","ORL","TOR","MIA","PHI","ATL","CHO","MIL","CHI","BRK","WAS","IND"],
+            ["Mar 16, 2026","DET","BOS","NYK","CLE","ORL","TOR","MIA","ATL","PHI","CHO","MIL","CHI","BRK","WAS","IND"],
+            ["Mar 17, 2026","DET","BOS","NYK","CLE","TOR","ORL","MIA","ATL","PHI","CHO","CHI","MIL","BRK","WAS","IND"],
+            ["Mar 18, 2026","DET","BOS","NYK","CLE","TOR","ORL","ATL","MIA","PHI","CHO","MIL","CHI","BRK","WAS","IND"],
+            ["Mar 19, 2026","DET","BOS","NYK","CLE","TOR","ATL","ORL","MIA","PHI","CHO","MIL","CHI","BRK","WAS","IND"],
+            ["Mar 20, 2026","DET","BOS","NYK","CLE","TOR","ORL","ATL","MIA","PHI","CHO","MIL","CHI","BRK","WAS","IND"],
+            ["Mar 21, 2026","DET","BOS","NYK","CLE","TOR","ATL","PHI","ORL","MIA","CHO","MIL","CHI","BRK","WAS","IND"]
+        ];
+
+        const westData = [
+            ["Oct 21, 2025","GSW","OKC","HOU","LAL"],
+            ["Oct 22, 2025","GSW","MEM","MIN","OKC","PHO","SAS","UTA","DAL","HOU","LAC","LAL","NOP","POR","SAC"],
+            ["Oct 23, 2025","GSW","OKC","MEM","MIN","PHO","SAS","UTA","DAL","DEN","HOU","LAC","LAL","NOP","POR","SAC"],
+            ["Oct 24, 2025","OKC","SAS","GSW","LAC","LAL","MEM","MIN","PHO","POR","SAC","UTA","DAL","DEN","HOU","NOP"],
+            ["Oct 25, 2025","OKC","SAS","GSW","MEM","DEN","LAC","LAL","MIN","POR","SAC","UTA","PHO","DAL","HOU","NOP"],
+            ["Oct 26, 2025","OKC","SAS","GSW","LAC","LAL","MEM","MIN","DEN","UTA","DAL","PHO","POR","SAC","HOU","NOP"],
+            ["Oct 27, 2025","OKC","SAS","GSW","DEN","LAC","UTA","LAL","MEM","MIN","POR","HOU","SAC","DAL","PHO","NOP"],
+            ["Oct 28, 2025","OKC","SAS","GSW","DEN","UTA","LAC","LAL","MEM","MIN","POR","HOU","DAL","PHO","SAC","NOP"],
+            ["Oct 29, 2025","OKC","SAS","GSW","DEN","LAL","MEM","POR","HOU","LAC","UTA","DAL","MIN","PHO","SAC","NOP"],
+            ["Oct 30, 2025","OKC","SAS","DEN","GSW","LAL","MEM","POR","HOU","LAC","UTA","DAL","MIN","PHO","SAC","NOP"],
+            ["Oct 31, 2025","OKC","SAS","GSW","LAL","POR","DEN","LAC","MEM","HOU","DAL","MIN","UTA","PHO","SAC","NOP"],
+            ["Nov 1, 2025","OKC","SAS","LAL","POR","DEN","HOU","LAC","GSW","MEM","MIN","UTA","DAL","PHO","SAC","NOP"],
+            ["Nov 2, 2025","OKC","SAS","LAL","POR","DEN","HOU","LAC","GSW","MIN","MEM","PHO","DAL","SAC","UTA","NOP"],
+            ["Nov 3, 2025","OKC","SAS","LAL","DEN","HOU","GSW","MIN","POR","LAC","PHO","UTA","MEM","DAL","SAC","NOP"],
+            ["Nov 4, 2025","OKC","SAS","LAL","DEN","HOU","GSW","MIN","POR","LAC","UTA","MEM","PHO","DAL","SAC","NOP"],
+            ["Nov 5, 2025","OKC","LAL","DEN","HOU","SAS","POR","GSW","MIN","LAC","PHO","SAC","UTA","MEM","DAL","NOP"],
+            ["Nov 6, 2025","OKC","LAL","DEN","HOU","SAS","POR","GSW","MIN","PHO","LAC","SAC","UTA","MEM","DAL","NOP"],
+            ["Nov 7, 2025","OKC","LAL","DEN","SAS","HOU","POR","MIN","GSW","PHO","MEM","LAC","SAC","UTA","NOP","DAL"],
+            ["Nov 8, 2025","OKC","DEN","SAS","LAL","HOU","MIN","POR","GSW","PHO","MEM","LAC","SAC","UTA","DAL","NOP"],
+            ["Nov 9, 2025","OKC","DEN","SAS","LAL","HOU","MIN","POR","GSW","PHO","MEM","LAC","UTA","DAL","SAC","NOP"],
+            ["Nov 10, 2025","OKC","SAS","DEN","LAL","HOU","MIN","GSW","PHO","POR","MEM","LAC","SAC","UTA","DAL","NOP"],
+            ["Nov 11, 2025","OKC","DEN","SAS","LAL","HOU","MIN","PHO","GSW","POR","UTA","MEM","LAC","DAL","SAC","NOP"],
+            ["Nov 12, 2025","OKC","DEN","SAS","HOU","LAL","MIN","PHO","POR","GSW","UTA","MEM","LAC","DAL","SAC","NOP"],
+            ["Nov 13, 2025","OKC","DEN","SAS","HOU","LAL","MIN","PHO","POR","GSW","UTA","MEM","LAC","DAL","SAC","NOP"],
+            ["Nov 14, 2025","OKC","DEN","HOU","LAL","MIN","SAS","PHO","GSW","POR","LAC","UTA","MEM","DAL","SAC","NOP"],
+            ["Nov 15, 2025","OKC","DEN","HOU","LAL","SAS","MIN","PHO","GSW","POR","LAC","UTA","MEM","DAL","SAC","NOP"],
+            ["Nov 16, 2025","OKC","DEN","HOU","LAL","SAS","MIN","GSW","PHO","POR","UTA","LAC","DAL","MEM","SAC","NOP"],
+            ["Nov 17, 2025","OKC","DEN","HOU","LAL","SAS","MIN","GSW","PHO","POR","UTA","LAC","MEM","DAL","SAC","NOP"],
+            ["Nov 18, 2025","OKC","DEN","HOU","LAL","SAS","MIN","PHO","GSW","POR","UTA","LAC","DAL","MEM","SAC","NOP"],
+            ["Nov 19, 2025","OKC","DEN","HOU","LAL","SAS","MIN","PHO","GSW","POR","UTA","LAC","MEM","DAL","SAC","NOP"],
+            ["Nov 20, 2025","OKC","DEN","HOU","LAL","SAS","MIN","PHO","GSW","POR","UTA","MEM","LAC","DAL","SAC","NOP"],
+            ["Nov 21, 2025","OKC","DEN","LAL","SAS","HOU","MIN","PHO","GSW","POR","UTA","MEM","DAL","LAC","SAC","NOP"],
+            ["Nov 22, 2025","OKC","DEN","LAL","SAS","HOU","MIN","PHO","GSW","POR","MEM","UTA","LAC","DAL","SAC","NOP"],
+            ["Nov 23, 2025","OKC","DEN","LAL","HOU","SAS","PHO","MIN","GSW","POR","MEM","UTA","LAC","DAL","SAC","NOP"],
+            ["Nov 24, 2025","OKC","DEN","LAL","HOU","SAS","PHO","MIN","GSW","POR","MEM","LAC","UTA","SAC","DAL","NOP"],
+            ["Nov 25, 2025","OKC","DEN","LAL","HOU","SAS","PHO","MIN","GSW","POR","MEM","UTA","LAC","SAC","DAL","NOP"],
+            ["Nov 26, 2025","OKC","DEN","LAL","HOU","SAS","PHO","MIN","GSW","POR","MEM","UTA","LAC","DAL","SAC","NOP"],
+            ["Nov 28, 2025","OKC","LAL","HOU","DEN","SAS","PHO","MIN","GSW","POR","MEM","UTA","LAC","DAL","SAC","NOP"],
+            ["Nov 29, 2025","OKC","LAL","HOU","DEN","SAS","MIN","PHO","GSW","POR","MEM","UTA","DAL","LAC","SAC","NOP"],
+            ["Nov 30, 2025","OKC","LAL","HOU","DEN","SAS","MIN","PHO","GSW","MEM","POR","UTA","DAL","LAC","SAC","NOP"],
+            ["Dec 1, 2025","OKC","LAL","HOU","DEN","SAS","MIN","PHO","GSW","MEM","POR","UTA","DAL","LAC","SAC","NOP"],
+            ["Dec 2, 2025","OKC","LAL","HOU","DEN","SAS","MIN","PHO","GSW","MEM","POR","UTA","DAL","LAC","SAC","NOP"],
+            ["Dec 3, 2025","OKC","LAL","HOU","DEN","SAS","MIN","PHO","GSW","MEM","POR","UTA","DAL","LAC","SAC","NOP"],
+            ["Dec 4, 2025","OKC","LAL","HOU","DEN","SAS","MIN","PHO","GSW","MEM","POR","UTA","DAL","LAC","SAC","NOP"],
+            ["Dec 5, 2025","OKC","HOU","DEN","LAL","SAS","MIN","PHO","GSW","MEM","POR","UTA","DAL","LAC","SAC","NOP"],
+            ["Dec 6, 2025","OKC","DEN","LAL","HOU","SAS","MIN","PHO","GSW","MEM","POR","UTA","DAL","SAC","LAC","NOP"],
+            ["Dec 7, 2025","OKC","DEN","LAL","HOU","SAS","MIN","PHO","GSW","MEM","POR","DAL","UTA","SAC","LAC","NOP"],
+            ["Dec 8, 2025","OKC","DEN","LAL","HOU","SAS","MIN","PHO","GSW","MEM","POR","DAL","UTA","LAC","SAC","NOP"],
+            ["Dec 9, 2025","OKC","DEN","LAL","HOU","SAS","MIN","PHO","GSW","MEM","POR","DAL","UTA","LAC","SAC","NOP"],
+            ["Dec 10, 2025","OKC","DEN","HOU","LAL","SAS","MIN","PHO","GSW","MEM","POR","DAL","UTA","LAC","SAC","NOP"],
+            ["Dec 11, 2025","OKC","DEN","HOU","LAL","SAS","MIN","PHO","GSW","MEM","DAL","POR","UTA","LAC","SAC","NOP"],
+            ["Dec 12, 2025","OKC","DEN","HOU","LAL","SAS","MIN","PHO","GSW","MEM","DAL","UTA","POR","LAC","SAC","NOP"],
+            ["Dec 13, 2025","OKC","DEN","HOU","SAS","LAL","MIN","PHO","GSW","MEM","DAL","UTA","POR","LAC","SAC","NOP"],
+            ["Dec 14, 2025","OKC","DEN","HOU","LAL","SAS","MIN","PHO","GSW","MEM","DAL","POR","UTA","LAC","SAC","NOP"],
+            ["Dec 15, 2025","OKC","DEN","LAL","SAS","HOU","MIN","PHO","GSW","MEM","UTA","POR","DAL","LAC","SAC","NOP"],
+            ["Dec 17, 2025","OKC","DEN","LAL","SAS","HOU","MIN","PHO","GSW","MEM","UTA","POR","DAL","LAC","SAC","NOP"],
+            ["Dec 18, 2025","OKC","DEN","LAL","SAS","HOU","MIN","PHO","MEM","GSW","POR","DAL","UTA","LAC","SAC","NOP"],
+            ["Dec 19, 2025","OKC","DEN","SAS","LAL","HOU","MIN","PHO","MEM","GSW","POR","DAL","UTA","LAC","SAC","NOP"],
+            ["Dec 20, 2025","OKC","DEN","SAS","LAL","HOU","MIN","PHO","GSW","MEM","POR","DAL","UTA","LAC","NOP","SAC"],
+            ["Dec 21, 2025","OKC","SAS","DEN","LAL","MIN","HOU","PHO","GSW","MEM","POR","DAL","UTA","LAC","NOP","SAC"],
+            ["Dec 22, 2025","OKC","DEN","SAS","LAL","MIN","HOU","PHO","GSW","MEM","POR","DAL","UTA","NOP","LAC","SAC"],
+            ["Dec 23, 2025","OKC","SAS","DEN","LAL","MIN","HOU","PHO","GSW","MEM","POR","DAL","UTA","LAC","NOP","SAC"],
+            ["Dec 25, 2025","OKC","SAS","DEN","LAL","MIN","HOU","PHO","GSW","MEM","POR","DAL","UTA","LAC","NOP","SAC"],
+            ["Dec 26, 2025","OKC","SAS","DEN","LAL","MIN","HOU","PHO","GSW","MEM","POR","DAL","UTA","LAC","NOP","SAC"],
+            ["Dec 27, 2025","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","MEM","POR","UTA","DAL","LAC","SAC","NOP"],
+            ["Dec 28, 2025","OKC","SAS","DEN","LAL","HOU","MIN","PHO","GSW","MEM","POR","UTA","DAL","LAC","SAC","NOP"],
+            ["Dec 29, 2025","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","MEM","POR","UTA","DAL","LAC","SAC","NOP"],
+            ["Dec 30, 2025","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","MEM","POR","UTA","DAL","LAC","SAC","NOP"],
+            ["Dec 31, 2025","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","MEM","POR","UTA","DAL","LAC","SAC","NOP"],
+            ["Jan 1, 2026","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","MEM","POR","LAC","UTA","DAL","SAC","NOP"],
+            ["Jan 2, 2026","OKC","SAS","HOU","DEN","LAL","MIN","PHO","GSW","MEM","POR","LAC","UTA","DAL","SAC","NOP"],
+            ["Jan 3, 2026","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","POR","MEM","DAL","LAC","UTA","SAC","NOP"],
+            ["Jan 4, 2026","OKC","SAS","LAL","DEN","HOU","MIN","PHO","GSW","POR","MEM","DAL","LAC","UTA","SAC","NOP"],
+            ["Jan 5, 2026","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","POR","MEM","LAC","DAL","UTA","SAC","NOP"],
+            ["Jan 6, 2026","OKC","SAS","LAL","DEN","HOU","MIN","PHO","GSW","POR","MEM","DAL","LAC","UTA","SAC","NOP"],
+            ["Jan 7, 2026","OKC","SAS","DEN","LAL","MIN","HOU","PHO","GSW","POR","MEM","DAL","LAC","UTA","SAC","NOP"],
+            ["Jan 8, 2026","OKC","SAS","DEN","MIN","LAL","HOU","PHO","GSW","POR","MEM","DAL","LAC","UTA","SAC","NOP"],
+            ["Jan 9, 2026","OKC","SAS","DEN","MIN","LAL","HOU","PHO","GSW","POR","MEM","LAC","DAL","UTA","NOP","SAC"],
+            ["Jan 10, 2026","OKC","SAS","DEN","MIN","LAL","HOU","PHO","GSW","POR","MEM","LAC","DAL","UTA","NOP","SAC"],
+            ["Jan 11, 2026","OKC","SAS","DEN","MIN","LAL","PHO","HOU","GSW","POR","MEM","LAC","DAL","UTA","SAC","NOP"],
+            ["Jan 12, 2026","OKC","SAS","DEN","MIN","LAL","PHO","HOU","GSW","POR","MEM","LAC","DAL","UTA","SAC","NOP"],
+            ["Jan 13, 2026","OKC","DEN","SAS","MIN","LAL","HOU","PHO","GSW","POR","MEM","LAC","DAL","UTA","SAC","NOP"],
+            ["Jan 14, 2026","OKC","DEN","SAS","MIN","LAL","HOU","PHO","GSW","POR","MEM","LAC","DAL","UTA","SAC","NOP"],
+            ["Jan 15, 2026","OKC","DEN","SAS","MIN","LAL","HOU","PHO","GSW","POR","LAC","MEM","DAL","UTA","SAC","NOP"],
+            ["Jan 16, 2026","OKC","DEN","SAS","MIN","HOU","LAL","PHO","GSW","POR","LAC","MEM","DAL","UTA","SAC","NOP"],
+            ["Jan 17, 2026","OKC","DEN","SAS","MIN","HOU","LAL","PHO","GSW","POR","LAC","MEM","DAL","UTA","SAC","NOP"],
+            ["Jan 18, 2026","OKC","SAS","DEN","MIN","HOU","LAL","PHO","GSW","POR","LAC","MEM","DAL","UTA","SAC","NOP"],
+            ["Jan 19, 2026","OKC","SAS","DEN","MIN","HOU","LAL","PHO","GSW","POR","LAC","MEM","DAL","UTA","SAC","NOP"],
+            ["Jan 20, 2026","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","POR","LAC","MEM","DAL","UTA","SAC","NOP"],
+            ["Jan 21, 2026","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","POR","LAC","MEM","DAL","UTA","SAC","NOP"],
+            ["Jan 22, 2026","OKC","SAS","DEN","HOU","PHO","LAL","MIN","GSW","POR","LAC","MEM","DAL","UTA","SAC","NOP"],
+            ["Jan 23, 2026","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","POR","LAC","DAL","MEM","UTA","SAC","NOP"],
+            ["Jan 24, 2026","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","POR","LAC","MEM","DAL","UTA","SAC","NOP"],
+            ["Jan 25, 2026","OKC","DEN","SAS","HOU","LAL","MIN","PHO","GSW","POR","LAC","MEM","DAL","UTA","SAC","NOP"],
+            ["Jan 26, 2026","OKC","DEN","SAS","HOU","LAL","MIN","PHO","GSW","POR","LAC","DAL","MEM","UTA","SAC","NOP"],
+            ["Jan 27, 2026","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","POR","LAC","DAL","MEM","UTA","SAC","NOP"],
+            ["Jan 28, 2026","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","POR","LAC","DAL","MEM","UTA","SAC","NOP"],
+            ["Jan 29, 2026","OKC","SAS","DEN","HOU","MIN","LAL","PHO","GSW","POR","LAC","MEM","DAL","UTA","NOP","SAC"],
+            ["Jan 30, 2026","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","POR","LAC","DAL","MEM","UTA","NOP","SAC"],
+            ["Jan 31, 2026","OKC","DEN","SAS","HOU","MIN","LAL","PHO","GSW","POR","LAC","DAL","MEM","UTA","NOP","SAC"],
+            ["Feb 1, 2026","OKC","SAS","DEN","HOU","MIN","LAL","PHO","GSW","LAC","POR","DAL","MEM","UTA","NOP","SAC"],
+            ["Feb 2, 2026","OKC","SAS","DEN","HOU","MIN","LAL","PHO","GSW","LAC","POR","MEM","DAL","UTA","NOP","SAC"],
+            ["Feb 3, 2026","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","LAC","POR","MEM","DAL","UTA","NOP","SAC"],
+            ["Feb 4, 2026","OKC","SAS","DEN","HOU","MIN","LAL","PHO","GSW","LAC","POR","MEM","DAL","UTA","NOP","SAC"],
+            ["Feb 5, 2026","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","LAC","POR","MEM","DAL","UTA","NOP","SAC"],
+            ["Feb 6, 2026","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","LAC","POR","MEM","DAL","UTA","NOP","SAC"],
+            ["Feb 7, 2026","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","POR","LAC","MEM","DAL","UTA","NOP","SAC"],
+            ["Feb 8, 2026","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","LAC","POR","MEM","DAL","UTA","NOP","SAC"],
+            ["Feb 9, 2026","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","POR","LAC","MEM","DAL","UTA","NOP","SAC"],
+            ["Feb 10, 2026","OKC","SAS","HOU","DEN","LAL","MIN","PHO","GSW","POR","LAC","MEM","DAL","UTA","NOP","SAC"],
+            ["Feb 11, 2026","OKC","SAS","DEN","HOU","MIN","LAL","PHO","GSW","LAC","POR","MEM","DAL","UTA","NOP","SAC"],
+            ["Feb 12, 2026","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","POR","LAC","MEM","DAL","UTA","NOP","SAC"],
+            ["Feb 19, 2026","OKC","SAS","HOU","DEN","LAL","MIN","PHO","GSW","LAC","POR","MEM","DAL","UTA","NOP","SAC"],
+            ["Feb 20, 2026","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","LAC","POR","MEM","DAL","UTA","NOP","SAC"],
+            ["Feb 21, 2026","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","LAC","POR","MEM","DAL","UTA","NOP","SAC"],
+            ["Feb 22, 2026","OKC","SAS","DEN","HOU","LAL","MIN","PHO","GSW","POR","LAC","MEM","DAL","UTA","NOP","SAC"],
+            ["Feb 23, 2026","OKC","SAS","HOU","DEN","LAL","MIN","PHO","GSW","POR","LAC","MEM","DAL","UTA","NOP","SAC"],
+            ["Feb 24, 2026","OKC","SAS","HOU","DEN","MIN","LAL","PHO","GSW","POR","LAC","MEM","DAL","UTA","NOP","SAC"],
+            ["Feb 25, 2026","OKC","SAS","HOU","DEN","MIN","LAL","PHO","GSW","POR","LAC","DAL","MEM","UTA","NOP","SAC"],
+            ["Feb 26, 2026","OKC","SAS","HOU","DEN","MIN","LAL","PHO","GSW","POR","LAC","MEM","DAL","UTA","NOP","SAC"],
+            ["Feb 27, 2026","OKC","SAS","HOU","DEN","MIN","LAL","PHO","GSW","POR","LAC","MEM","DAL","UTA","NOP","SAC"],
+            ["Feb 28, 2026","OKC","SAS","HOU","DEN","MIN","LAL","PHO","GSW","POR","LAC","MEM","DAL","NOP","UTA","SAC"],
+            ["Mar 1, 2026","OKC","SAS","HOU","MIN","DEN","LAL","PHO","GSW","LAC","POR","MEM","DAL","NOP","UTA","SAC"],
+            ["Mar 2, 2026","OKC","SAS","HOU","MIN","DEN","LAL","PHO","GSW","LAC","POR","MEM","DAL","NOP","UTA","SAC"],
+            ["Mar 3, 2026","OKC","SAS","HOU","MIN","DEN","LAL","PHO","GSW","LAC","POR","MEM","DAL","NOP","UTA","SAC"],
+            ["Mar 4, 2026","OKC","SAS","HOU","MIN","DEN","LAL","PHO","GSW","LAC","POR","MEM","DAL","NOP","UTA","SAC"],
+            ["Mar 5, 2026","OKC","SAS","MIN","HOU","DEN","LAL","PHO","GSW","LAC","POR","MEM","DAL","NOP","UTA","SAC"],
+            ["Mar 6, 2026","OKC","SAS","MIN","HOU","DEN","LAL","PHO","GSW","LAC","POR","MEM","DAL","NOP","UTA","SAC"],
+            ["Mar 7, 2026","OKC","SAS","HOU","MIN","DEN","LAL","PHO","GSW","LAC","POR","MEM","DAL","NOP","UTA","SAC"],
+            ["Mar 8, 2026","OKC","SAS","MIN","HOU","DEN","LAL","PHO","GSW","LAC","POR","MEM","DAL","NOP","UTA","SAC"],
+            ["Mar 9, 2026","OKC","SAS","MIN","HOU","LAL","DEN","PHO","GSW","LAC","POR","MEM","DAL","NOP","UTA","SAC"],
+            ["Mar 10, 2026","OKC","SAS","HOU","LAL","MIN","DEN","PHO","LAC","GSW","POR","MEM","DAL","NOP","UTA","SAC"],
+            ["Mar 11, 2026","OKC","SAS","HOU","LAL","DEN","MIN","PHO","LAC","GSW","POR","MEM","NOP","DAL","UTA","SAC"],
+            ["Mar 12, 2026","OKC","SAS","LAL","HOU","DEN","MIN","PHO","LAC","GSW","POR","MEM","DAL","NOP","UTA","SAC"],
+            ["Mar 13, 2026","OKC","SAS","HOU","LAL","DEN","MIN","PHO","LAC","GSW","POR","MEM","DAL","NOP","UTA","SAC"],
+            ["Mar 14, 2026","OKC","SAS","LAL","HOU","MIN","DEN","PHO","LAC","GSW","POR","MEM","DAL","NOP","UTA","SAC"],
+            ["Mar 15, 2026","OKC","SAS","LAL","HOU","DEN","MIN","PHO","LAC","GSW","POR","MEM","DAL","NOP","UTA","SAC"],
+            ["Mar 16, 2026","OKC","SAS","LAL","HOU","DEN","MIN","PHO","LAC","GSW","POR","MEM","DAL","NOP","UTA","SAC"],
+            ["Mar 17, 2026","OKC","SAS","LAL","HOU","DEN","MIN","PHO","LAC","GSW","POR","MEM","DAL","NOP","UTA","SAC"],
+            ["Mar 18, 2026","OKC","SAS","LAL","MIN","HOU","DEN","PHO","LAC","POR","GSW","MEM","NOP","DAL","UTA","SAC"],
+            ["Mar 19, 2026","OKC","SAS","LAL","MIN","HOU","DEN","PHO","LAC","POR","GSW","MEM","NOP","DAL","UTA","SAC"],
+            ["Mar 20, 2026","OKC","SAS","LAL","HOU","DEN","MIN","PHO","POR","LAC","GSW","NOP","MEM","DAL","UTA","SAC"],
+            ["Mar 21, 2026","OKC","SAS","LAL","HOU","DEN","MIN","PHO","LAC","POR","GSW","NOP","MEM","DAL","UTA","SAC"]
+        ];
+
+        const teamNames = {
+            ATL: "Atlanta Hawks", BOS: "Boston Celtics", BRK: "Brooklyn Nets", CHI: "Chicago Bulls",
+            CHO: "Charlotte Hornets", CLE: "Cleveland Cavaliers", DAL: "Dallas Mavericks", DEN: "Denver Nuggets",
+            DET: "Detroit Pistons", GSW: "Golden State Warriors", HOU: "Houston Rockets", IND: "Indiana Pacers",
+            LAC: "LA Clippers", LAL: "Los Angeles Lakers", MEM: "Memphis Grizzlies", MIA: "Miami Heat",
+            MIL: "Milwaukee Bucks", MIN: "Minnesota Timberwolves", NOP: "New Orleans Pelicans", NYK: "New York Knicks",
+            OKC: "Oklahoma City Thunder", ORL: "Orlando Magic", PHI: "Philadelphia 76ers", PHO: "Phoenix Suns",
+            POR: "Portland Trail Blazers", SAC: "Sacramento Kings", SAS: "San Antonio Spurs", TOR: "Toronto Raptors",
+            UTA: "Utah Jazz", WAS: "Washington Wizards"
+        };
+
+        const logoMap = {
+            ATL: "atl", BOS: "bos", BRK: "bkn", CHI: "chi", CHO: "cha", CLE: "cle", DAL: "dal", DEN: "den",
+            DET: "det", GSW: "gs", HOU: "hou", IND: "ind", LAC: "lac", LAL: "lal", MEM: "mem", MIA: "mia",
+            MIL: "mil", MIN: "min", NOP: "no", NYK: "ny", OKC: "okc", ORL: "orl", PHI: "phi", PHO: "phx",
+            POR: "por", SAC: "sac", SAS: "sa", TOR: "tor", UTA: "utah", WAS: "wsh"
+        };
+
+        const teamColors = {
+            ATL: "#E03A3E", BOS: "#007A33", BRK: "#888888", CHI: "#CE1141", CHO: "#00788C", CLE: "#860038",
+            DAL: "#00538C", DEN: "#0E2240", DET: "#C8102E", GSW: "#1D428A", HOU: "#CE1141", IND: "#002D62",
+            LAC: "#C8102E", LAL: "#552583", MEM: "#5D76A9", MIA: "#98002E", MIL: "#00471B", MIN: "#0C2340",
+            NOP: "#0C2340", NYK: "#006BB6", OKC: "#007AC1", ORL: "#0077C0", PHI: "#006BB6", PHO: "#E56020",
+            POR: "#E03A3E", SAC: "#5A2D81", SAS: "#C4CED4", TOR: "#CE1141", UTA: "#002B5C", WAS: "#002B5C"
+        };
+
+        let currentConference = "east";
+        let currentDateIndex = 0;
+        let isPlaying = false;
+        let animationSpeed = 1;
+        let animationTimerId = null;
+
+        const dateDisplay = document.getElementById("dateDisplay");
+        const standingsRows = document.getElementById("standingsRows");
+        const playBtn = document.getElementById("playBtn");
+        const backBtn = document.getElementById("backBtn");
+        const forwardBtn = document.getElementById("forwardBtn");
+        const speedSlider = document.getElementById("speedSlider");
+        const dateSlider = document.getElementById("dateSlider");
+        const boardTitle = document.getElementById("boardTitle");
+        const timelineProgress = document.getElementById("timelineProgress");
+        const tabButtons = document.querySelectorAll(".conf-tab");
+
+        const data = { east: eastData, west: westData };
+        let allDates = Array.from(new Set([
+            ...eastData.map(row => row[0]),
+            ...westData.map(row => row[0])
+        ])).sort((a, b) => new Date(a) - new Date(b));
+
+        dateSlider.max = allDates.length - 1;
+
+        function getLogoUrl(teamAbbr) {
+            const slug = logoMap[teamAbbr];
+            return `https://a.espncdn.com/i/teamlogos/nba/500/${slug}.png`;
+        }
+
+        let teamElements = {};
+        let lastConference = null;
+
+        function initTeamElements(conference) {
+            standingsRows.innerHTML = "";
+            teamElements = {};
+            const teams = conference === "east"
+                ? ["ATL","BOS","BRK","CHI","CHO","CLE","DET","IND","MIA","MIL","NYK","ORL","PHI","TOR","WAS"]
+                : ["DAL","DEN","GSW","HOU","LAC","LAL","MEM","MIN","NOP","OKC","PHO","POR","SAC","SAS","UTA"];
+
+            boardTitle.textContent = conference === "east" ? "Eastern Conference" : "Western Conference";
+
+            teams.forEach(abbr => {
+                const row = document.createElement("div");
+                row.className = "team-row";
+                row.style.top = "0px";
+
+                const zoneInd = document.createElement("div");
+                zoneInd.className = "zone-indicator";
+
+                const rank = document.createElement("div");
+                rank.className = "rank";
+                rank.textContent = "1";
+
+                const logo = document.createElement("img");
+                logo.className = "team-logo";
+                logo.src = getLogoUrl(abbr);
+                logo.alt = abbr;
+                logo.loading = "lazy";
+                logo.onerror = function() { this.style.display = "none"; };
+
+                const nameEl = document.createElement("div");
+                nameEl.className = "team-name";
+                nameEl.textContent = teamNames[abbr];
+
+                const abbrEl = document.createElement("div");
+                abbrEl.className = "team-abbr";
+                abbrEl.textContent = abbr;
+
+                row.appendChild(zoneInd);
+                row.appendChild(rank);
+                row.appendChild(logo);
+                row.appendChild(nameEl);
+                row.appendChild(abbrEl);
+
+                standingsRows.appendChild(row);
+                teamElements[abbr] = { row, rank, zoneInd };
+            });
+
+            lastConference = conference;
+        }
+
+        function renderStandings() {
+            if (lastConference !== currentConference) {
+                initTeamElements(currentConference);
+            }
+
+            const currentData = data[currentConference];
+            const currentDate = allDates[currentDateIndex];
+            const dateData = currentData.find(row => row[0] === currentDate);
+
+            if (!dateData) return;
+
+            dateDisplay.textContent = currentDate;
+            dateSlider.value = currentDateIndex;
+            timelineProgress.textContent = `Day ${currentDateIndex + 1} of ${allDates.length}`;
+
+            Object.values(teamElements).forEach(el => {
+                el.row.style.display = "none";
+            });
+
+            for (let i = 1; i < dateData.length; i++) {
+                const teamAbbr = dateData[i];
+                if (!teamAbbr || !teamElements[teamAbbr]) continue;
+
+                const el = teamElements[teamAbbr];
+                const rankNum = i;
+                el.row.style.display = "flex";
+                el.row.style.top = (rankNum - 1) * 52 + "px";
+                el.rank.textContent = rankNum;
+
+                // Rank coloring
+                el.rank.className = "rank";
+                if (rankNum <= 3) el.rank.classList.add("top-3");
+                else if (rankNum <= 6) el.rank.classList.add("playoff");
+                else if (rankNum <= 10) el.rank.classList.add("playin");
+                else el.rank.classList.add("lottery");
+
+                // Zone indicator
+                el.zoneInd.className = "zone-indicator";
+                if (rankNum <= 6) el.zoneInd.classList.add("zone-playoff");
+                else if (rankNum <= 10) el.zoneInd.classList.add("zone-playin");
+                else el.zoneInd.classList.add("zone-lottery");
+            }
+        }
+
+        function updateDate(index) {
+            currentDateIndex = Math.max(0, Math.min(index, allDates.length - 1));
+            dateSlider.value = currentDateIndex;
+            renderStandings();
+        }
+
+        function getInterval() {
+            return Math.max(60, 600 / animationSpeed);
+        }
+
+        function play() {
+            if (isPlaying) return;
+            isPlaying = true;
+            playBtn.textContent = "⏸";
+
+            function step() {
+                currentDateIndex++;
+                if (currentDateIndex >= allDates.length - 1) {
+                    currentDateIndex = allDates.length - 1;
+                    updateDate(currentDateIndex);
+                    pause();
+                    return;
+                }
+                updateDate(currentDateIndex);
+                animationTimerId = setTimeout(step, getInterval());
+            }
+            animationTimerId = setTimeout(step, getInterval());
+        }
+
+        function pause() {
+            isPlaying = false;
+            playBtn.textContent = "▶";
+            if (animationTimerId) { clearTimeout(animationTimerId); animationTimerId = null; }
+        }
+
+        playBtn.addEventListener("click", () => isPlaying ? pause() : play());
+
+        backBtn.addEventListener("click", () => {
+            pause();
+            updateDate(currentDateIndex - 1);
+        });
+
+        forwardBtn.addEventListener("click", () => {
+            pause();
+            updateDate(currentDateIndex + 1);
+        });
+
+        speedSlider.addEventListener("input", (e) => {
+            animationSpeed = parseFloat(e.target.value);
+            if (isPlaying) { pause(); play(); }
+        });
+
+        dateSlider.addEventListener("input", (e) => {
+            pause();
+            updateDate(parseInt(e.target.value));
+        });
+
+        tabButtons.forEach(btn => {
+            btn.addEventListener("click", () => {
+                tabButtons.forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                currentConference = btn.dataset.conference;
+                currentDateIndex = 0;
+                updateDate(0);
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener("keydown", (e) => {
+            if (e.key === " " || e.code === "Space") { e.preventDefault(); isPlaying ? pause() : play(); }
+            if (e.key === "ArrowLeft") { pause(); updateDate(currentDateIndex - 1); }
+            if (e.key === "ArrowRight") { pause(); updateDate(currentDateIndex + 1); }
+        });
+
+        // Start at first date where both conferences have full 15-team rosters
+        const startIndex = allDates.findIndex(date => {
+            const e = eastData.find(r => r[0] === date);
+            const w = westData.find(r => r[0] === date);
+            return e && w && e.length >= 16 && w.length >= 16;
+        });
+        if (startIndex > 0) currentDateIndex = startIndex;
+
+        renderStandings();
+    </script>
+</body>
+</html>
