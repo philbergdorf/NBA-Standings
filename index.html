@@ -54,68 +54,47 @@
             z-index: 1;
             max-width: 880px;
             margin: 0 auto;
-            padding: 40px 24px 60px;
+            padding: 28px 24px 48px;
         }
 
         /* ── Header ── */
         .header {
-            text-align: center;
-            margin-bottom: 40px;
-            position: relative;
+            margin-bottom: 24px;
         }
 
-        .league-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: linear-gradient(135deg, rgba(212,168,67,0.12), rgba(212,168,67,0.04));
-            border: 1px solid rgba(212,168,67,0.2);
-            border-radius: 100px;
-            padding: 6px 18px;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 2.5px;
-            text-transform: uppercase;
-            color: var(--accent-gold);
-            margin-bottom: 20px;
+        .header-top {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 16px;
         }
 
-        .league-badge::before {
-            content: '';
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: var(--accent-gold);
-            animation: pulse-dot 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 0.4; }
-            50% { opacity: 1; }
+        .title-group {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
         }
 
         .title {
             font-family: 'Bebas Neue', sans-serif;
-            font-size: clamp(48px, 8vw, 72px);
-            line-height: 0.9;
+            font-size: clamp(28px, 5vw, 40px);
             letter-spacing: 2px;
             color: var(--text-primary);
-            margin-bottom: 6px;
+            line-height: 1;
         }
 
-        .title span {
-            display: block;
-            font-size: 0.45em;
-            letter-spacing: 6px;
-            color: var(--text-secondary);
-            margin-top: 4px;
+        .league-badge {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 14px;
+            letter-spacing: 2px;
+            color: var(--text-muted);
         }
 
         .date-display {
             font-family: 'Bebas Neue', sans-serif;
-            font-size: 28px;
+            font-size: 26px;
             letter-spacing: 3px;
             color: var(--accent-gold);
-            margin-top: 16px;
             transition: opacity 0.2s;
         }
 
@@ -123,9 +102,7 @@
         .controls {
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 12px;
-            margin-bottom: 32px;
             flex-wrap: wrap;
         }
 
@@ -472,8 +449,8 @@
 
         /* ── Responsive ── */
         @media (max-width: 640px) {
-            .page-wrapper { padding: 24px 12px 40px; }
-            .title { font-size: 42px; }
+            .page-wrapper { padding: 16px 12px 32px; }
+            .header-top { flex-wrap: wrap; gap: 4px; }
             .controls { gap: 8px; }
             .conf-tab { padding: 8px 14px; font-size: 12px; }
             .team-name { min-width: 140px; font-size: 13px; }
@@ -490,43 +467,42 @@
         }
 
         .header { animation: fade-up 0.6s ease-out; }
-        .controls { animation: fade-up 0.6s ease-out 0.1s both; }
+        .timeline { animation: fade-up 0.6s ease-out 0.1s both; }
         .board { animation: fade-up 0.6s ease-out 0.2s both; }
-        .timeline { animation: fade-up 0.6s ease-out 0.3s both; }
     </style>
 </head>
 <body>
     <div class="page-wrapper">
         <header class="header">
-            <div class="league-badge">2025 – 26 Season</div>
-            <div class="title">
-                NBA Standings
-                <span>Race</span>
+            <div class="header-top">
+                <div class="title-group">
+                    <div class="title">NBA Standings Race</div>
+                    <div class="league-badge">2025 – 26</div>
+                </div>
+                <div class="date-display" id="dateDisplay">Oct 22, 2025</div>
             </div>
-            <div class="date-display" id="dateDisplay">Oct 22, 2025</div>
+            <div class="controls">
+                <div class="conf-tabs">
+                    <button class="conf-tab active" data-conference="east">East</button>
+                    <button class="conf-tab" data-conference="west">West</button>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="playback">
+                    <button class="ctrl-btn" id="backBtn" title="Previous">◀◀</button>
+                    <button class="ctrl-btn play-btn" id="playBtn" title="Play">▶</button>
+                    <button class="ctrl-btn" id="forwardBtn" title="Next">▶▶</button>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="speed-group">
+                    <span class="speed-label">Speed</span>
+                    <input type="range" id="speedSlider" class="speed-slider" min="0.25" max="3" step="0.25" value="1">
+                </div>
+            </div>
         </header>
-
-        <div class="controls">
-            <div class="conf-tabs">
-                <button class="conf-tab active" data-conference="east">East</button>
-                <button class="conf-tab" data-conference="west">West</button>
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="playback">
-                <button class="ctrl-btn" id="backBtn" title="Previous">◀◀</button>
-                <button class="ctrl-btn play-btn" id="playBtn" title="Play">▶</button>
-                <button class="ctrl-btn" id="forwardBtn" title="Next">▶▶</button>
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="speed-group">
-                <span class="speed-label">Speed</span>
-                <input type="range" id="speedSlider" class="speed-slider" min="0.25" max="3" step="0.25" value="1">
-            </div>
-        </div>
 
         <div class="timeline">
             <div class="timeline-header">
