@@ -979,10 +979,10 @@
 
         const teamColors = {
             ATL: "#E03A3E", BOS: "#007A33", BRK: "#888888", CHI: "#CE1141", CHO: "#00788C", CLE: "#860038",
-            DAL: "#00538C", DEN: "#0E2240", DET: "#C8102E", GSW: "#1D428A", HOU: "#CE1141", IND: "#002D62",
-            LAC: "#C8102E", LAL: "#552583", MEM: "#5D76A9", MIA: "#98002E", MIL: "#00471B", MIN: "#0C2340",
-            NOP: "#0C2340", NYK: "#006BB6", OKC: "#007AC1", ORL: "#0077C0", PHI: "#006BB6", PHO: "#E56020",
-            POR: "#E03A3E", SAC: "#5A2D81", SAS: "#C4CED4", TOR: "#CE1141", UTA: "#002B5C", WAS: "#002B5C"
+            DAL: "#00538C", DEN: "#FEC524", DET: "#C8102E", GSW: "#1D428A", HOU: "#CE1141", IND: "#FDBB30",
+            LAC: "#ED174C", LAL: "#552583", MEM: "#5D76A9", MIA: "#F9A01B", MIL: "#00471B", MIN: "#236192",
+            NOP: "#B4975A", NYK: "#F58426", OKC: "#007AC1", ORL: "#0077C0", PHI: "#006BB6", PHO: "#E56020",
+            POR: "#E03A3E", SAC: "#5A2D81", SAS: "#C4CED4", TOR: "#A1A1A4", UTA: "#5C88AB", WAS: "#E31837"
         };
 
         let currentConference = "east";
@@ -1201,7 +1201,7 @@
         });
 
         // ── Bump Chart ──
-        const BUMP_PADDING = { top: 20, right: 60, bottom: 20, left: 60 };
+        const BUMP_PADDING = { top: 20, right: 100, bottom: 20, left: 100 };
         const BUMP_HEIGHT = 680;
 
         function buildBumpData(conference) {
@@ -1308,8 +1308,20 @@
                 bumpSvg.appendChild(path);
                 pathElements[abbr] = path;
 
-                // Start label
+                // Start label (logo + abbr)
                 const first = points[0];
+                const logoSize = 18;
+
+                const startLogo = document.createElementNS("http://www.w3.org/2000/svg", "image");
+                startLogo.setAttribute("href", getLogoUrl(abbr));
+                startLogo.setAttribute("x", x(first.dateIndex) - 28 - logoSize);
+                startLogo.setAttribute("y", y(first.rank) - logoSize / 2);
+                startLogo.setAttribute("width", logoSize);
+                startLogo.setAttribute("height", logoSize);
+                startLogo.classList.add("bump-label");
+                startLogo.dataset.team = abbr;
+                bumpSvg.appendChild(startLogo);
+
                 const startLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
                 startLabel.setAttribute("x", x(first.dateIndex) - 8);
                 startLabel.setAttribute("y", y(first.rank) + 4);
@@ -1319,7 +1331,7 @@
                 startLabel.textContent = abbr;
                 bumpSvg.appendChild(startLabel);
 
-                // End label
+                // End label (abbr + logo)
                 const last = points[points.length - 1];
                 const endLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
                 endLabel.setAttribute("x", x(last.dateIndex) + 8);
@@ -1330,7 +1342,17 @@
                 endLabel.textContent = abbr;
                 bumpSvg.appendChild(endLabel);
 
-                labelElements[abbr] = [startLabel, endLabel];
+                const endLogo = document.createElementNS("http://www.w3.org/2000/svg", "image");
+                endLogo.setAttribute("href", getLogoUrl(abbr));
+                endLogo.setAttribute("x", x(last.dateIndex) + 46);
+                endLogo.setAttribute("y", y(last.rank) - logoSize / 2);
+                endLogo.setAttribute("width", logoSize);
+                endLogo.setAttribute("height", logoSize);
+                endLogo.classList.add("bump-label");
+                endLogo.dataset.team = abbr;
+                bumpSvg.appendChild(endLogo);
+
+                labelElements[abbr] = [startLabel, endLabel, startLogo, endLogo];
             });
 
             // Date marker line
