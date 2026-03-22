@@ -374,6 +374,7 @@
             font-size: 14px;
             color: var(--text-primary);
             white-space: nowrap;
+            min-width: 200px;
         }
 
         .team-abbr {
@@ -382,6 +383,7 @@
             letter-spacing: 2px;
             color: var(--text-muted);
             margin-left: 8px;
+            flex-shrink: 0;
         }
 
         /* ── Timeline ── */
@@ -1036,8 +1038,7 @@
                 tabButtons.forEach(b => b.classList.remove("active"));
                 btn.classList.add("active");
                 currentConference = btn.dataset.conference;
-                currentDateIndex = 0;
-                updateDate(0);
+                renderStandings();
             });
         });
 
