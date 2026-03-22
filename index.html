@@ -491,13 +491,6 @@
             opacity: 0.5;
         }
 
-        .bump-date-marker {
-            stroke: var(--accent-gold);
-            stroke-width: 1.5;
-            opacity: 0.6;
-            transition: x1 0.1s, x2 0.1s;
-        }
-
         .bump-rank-label {
             font-family: 'Bebas Neue', sans-serif;
             font-size: 12px;
@@ -1228,7 +1221,6 @@
         }
 
         function renderBumpChart() {
-            const cacheKey = currentConference;
             const svgWidth = bumpSvg.parentElement.clientWidth;
             const chartWidth = svgWidth - BUMP_PADDING.left - BUMP_PADDING.right;
             const chartHeight = BUMP_HEIGHT - BUMP_PADDING.top - BUMP_PADDING.bottom;
@@ -1238,10 +1230,12 @@
             bumpSvg.classList.remove("has-hover");
 
             const teamRanks = buildBumpData(currentConference);
-            const totalDates = allDates.length;
+            const startIdx = currentDateIndex;
+            const endIdx = allDates.length - 1;
+            const dateSpan = Math.max(1, endIdx - startIdx);
 
             function x(dateIndex) {
-                return BUMP_PADDING.left + (dateIndex / (totalDates - 1)) * chartWidth;
+                return BUMP_PADDING.left + ((dateIndex - startIdx) / dateSpan) * chartWidth;
             }
 
             function y(rank) {
@@ -1283,7 +1277,7 @@
             const labelElements = {};
 
             Object.keys(teamRanks).forEach(abbr => {
-                const points = teamRanks[abbr];
+                const points = teamRanks[abbr].filter(p => p.dateIndex >= startIdx);
                 if (points.length === 0) return;
 
                 // Build path
@@ -1355,17 +1349,7 @@
                 labelElements[abbr] = [startLabel, endLabel, startLogo, endLogo];
             });
 
-            // Date marker line
-            const dateMarker = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            dateMarker.setAttribute("y1", BUMP_PADDING.top - 5);
-            dateMarker.setAttribute("y2", BUMP_HEIGHT - BUMP_PADDING.bottom + 5);
-            dateMarker.classList.add("bump-date-marker");
-            bumpSvg.appendChild(dateMarker);
-
-            // Store reference for updates
-            bumpSvg._dateMarker = dateMarker;
-            bumpSvg._xScale = x;
-            updateBumpDateMarker();
+            bumpChartBuiltFor = currentConference + ":" + currentDateIndex;
 
             // Hover interactions
             function highlightTeam(abbr) {
@@ -1394,14 +1378,6 @@
                 if (team) clearHighlight();
             });
 
-            bumpChartBuiltFor = cacheKey;
-        }
-
-        function updateBumpDateMarker() {
-            if (!bumpSvg._dateMarker || !bumpSvg._xScale) return;
-            const mx = bumpSvg._xScale(currentDateIndex);
-            bumpSvg._dateMarker.setAttribute("x1", mx);
-            bumpSvg._dateMarker.setAttribute("x2", mx);
         }
 
         // Patch renderStandings to also update bump chart
@@ -1409,10 +1385,9 @@
         renderStandings = function() {
             _origRenderStandings();
             if (currentView === "chart") {
-                if (bumpChartBuiltFor !== currentConference) {
+                const key = currentConference + ":" + currentDateIndex;
+                if (bumpChartBuiltFor !== key) {
                     renderBumpChart();
-                } else {
-                    updateBumpDateMarker();
                 }
             }
         };
