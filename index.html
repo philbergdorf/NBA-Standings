@@ -477,18 +477,34 @@
             fill: var(--text-primary);
         }
 
-        .bump-cutline {
-            stroke: rgba(255,255,255,0.08);
-            stroke-width: 1;
+        .bump-cutline-playoff {
+            stroke: var(--playoff-green);
+            stroke-width: 1.5;
             stroke-dasharray: 6 4;
+            opacity: 0.4;
         }
 
-        .bump-cutline-label {
+        .bump-cutline-playin {
+            stroke: var(--playin-amber);
+            stroke-width: 1.5;
+            stroke-dasharray: 6 4;
+            opacity: 0.4;
+        }
+
+        .bump-cutline-label-playoff {
             font-family: 'Bebas Neue', sans-serif;
-            font-size: 11px;
+            font-size: 12px;
             letter-spacing: 2px;
-            fill: var(--text-muted);
-            opacity: 0.5;
+            fill: var(--playoff-green);
+            opacity: 0.7;
+        }
+
+        .bump-cutline-label-playin {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 12px;
+            letter-spacing: 2px;
+            fill: var(--playin-amber);
+            opacity: 0.7;
         }
 
         .bump-rank-label {
@@ -1256,19 +1272,20 @@
             // Cutlines
             [6, 10].forEach((rank, i) => {
                 const lineY = y(rank) + (y(rank + 1) - y(rank)) / 2;
+                const isPlayoff = i === 0;
                 const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
                 line.setAttribute("x1", BUMP_PADDING.left);
                 line.setAttribute("x2", svgWidth - BUMP_PADDING.right);
                 line.setAttribute("y1", lineY);
                 line.setAttribute("y2", lineY);
-                line.classList.add("bump-cutline");
+                line.classList.add(isPlayoff ? "bump-cutline-playoff" : "bump-cutline-playin");
                 bumpSvg.appendChild(line);
 
                 const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
                 label.setAttribute("x", svgWidth - BUMP_PADDING.right + 4);
                 label.setAttribute("y", lineY + 4);
-                label.classList.add("bump-cutline-label");
-                label.textContent = i === 0 ? "PLAYOFFS" : "PLAY-IN";
+                label.classList.add(isPlayoff ? "bump-cutline-label-playoff" : "bump-cutline-label-playin");
+                label.textContent = isPlayoff ? "PLAYOFFS" : "PLAY-IN";
                 bumpSvg.appendChild(label);
             });
 
