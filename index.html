@@ -939,9 +939,15 @@
 
             const currentData = data[currentConference];
             const currentDate = allDates[currentDateIndex];
-            const dateData = currentData.find(row => row[0] === currentDate);
 
-            if (!dateData) return;
+            // Find this date's data, or the most recent prior date with data
+            let dateData = currentData.find(row => row[0] === currentDate);
+            if (!dateData) {
+                for (let i = currentDateIndex - 1; i >= 0; i--) {
+                    dateData = currentData.find(row => row[0] === allDates[i]);
+                    if (dateData) break;
+                }
+            }
 
             dateDisplay.textContent = currentDate;
             dateSlider.value = currentDateIndex;
@@ -950,6 +956,8 @@
             Object.values(teamElements).forEach(el => {
                 el.row.style.display = "none";
             });
+
+            if (!dateData) return;
 
             for (let i = 1; i < dateData.length; i++) {
                 const teamAbbr = dateData[i];
