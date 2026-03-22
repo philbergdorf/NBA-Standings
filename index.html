@@ -1048,13 +1048,7 @@
             if (e.key === "ArrowRight") { pause(); updateDate(currentDateIndex + 1); }
         });
 
-        // Start at first date where both conferences have full 15-team rosters
-        const startIndex = allDates.findIndex(date => {
-            const e = eastData.find(r => r[0] === date);
-            const w = westData.find(r => r[0] === date);
-            return e && w && e.length >= 16 && w.length >= 16;
-        });
-        if (startIndex > 0) currentDateIndex = startIndex;
+        // Start on day 1 — only teams present in the data for that date are shown
 
         renderStandings();
     </script>
