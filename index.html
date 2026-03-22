@@ -139,6 +139,39 @@
             color: var(--text-secondary);
         }
 
+        .view-toggle {
+            display: flex;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 4px;
+            gap: 2px;
+        }
+
+        .view-btn {
+            font-family: 'DM Sans', sans-serif;
+            padding: 10px 18px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.25s ease;
+        }
+
+        .view-btn.active {
+            background: rgba(255,255,255,0.08);
+            color: var(--text-primary);
+            box-shadow: 0 1px 8px rgba(0,0,0,0.3);
+        }
+
+        .view-btn:hover:not(.active) {
+            color: var(--text-secondary);
+        }
+
         .divider {
             width: 1px;
             height: 28px;
@@ -276,6 +309,11 @@
         .standings-area {
             position: relative;
             padding: 8px 0;
+            display: none;
+        }
+
+        .standings-area.active {
+            display: block;
         }
 
         /* Cutlines between zones */
@@ -384,6 +422,93 @@
             color: var(--text-muted);
             margin-left: 8px;
             flex-shrink: 0;
+        }
+
+        /* ── Bump Chart ── */
+        .bump-chart {
+            display: none;
+            padding: 20px 0 20px 0;
+            position: relative;
+        }
+
+        .bump-chart.active {
+            display: block;
+        }
+
+        .bump-chart-svg {
+            width: 100%;
+            height: 680px;
+            overflow: visible;
+        }
+
+        .bump-line {
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: opacity 0.2s, stroke-width 0.2s;
+            cursor: pointer;
+        }
+
+        .bump-chart-svg.has-hover .bump-line {
+            opacity: 0.12;
+        }
+
+        .bump-chart-svg.has-hover .bump-line.highlighted {
+            opacity: 1;
+            stroke-width: 4;
+        }
+
+        .bump-label {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 13px;
+            letter-spacing: 1px;
+            fill: var(--text-secondary);
+            transition: opacity 0.2s, fill 0.2s;
+            cursor: pointer;
+        }
+
+        .bump-chart-svg.has-hover .bump-label {
+            opacity: 0.2;
+        }
+
+        .bump-chart-svg.has-hover .bump-label.highlighted {
+            opacity: 1;
+            fill: var(--text-primary);
+        }
+
+        .bump-cutline {
+            stroke: rgba(255,255,255,0.08);
+            stroke-width: 1;
+            stroke-dasharray: 6 4;
+        }
+
+        .bump-cutline-label {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 11px;
+            letter-spacing: 2px;
+            fill: var(--text-muted);
+            opacity: 0.5;
+        }
+
+        .bump-date-marker {
+            stroke: var(--accent-gold);
+            stroke-width: 1.5;
+            opacity: 0.6;
+            transition: x1 0.1s, x2 0.1s;
+        }
+
+        .bump-rank-label {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 12px;
+            fill: var(--text-muted);
+            opacity: 0.3;
+        }
+
+        .bump-logo {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
         }
 
         /* ── Timeline ── */
@@ -503,6 +628,13 @@
                     <span class="speed-label">Speed</span>
                     <input type="range" id="speedSlider" class="speed-slider" min="0.25" max="3" step="0.25" value="1">
                 </div>
+
+                <div class="divider"></div>
+
+                <div class="view-toggle">
+                    <button class="view-btn active" data-view="list">List</button>
+                    <button class="view-btn" data-view="chart">Chart</button>
+                </div>
             </div>
         </header>
 
@@ -522,10 +654,13 @@
                     <div class="legend-item"><div class="legend-dot playin"></div>Play-In</div>
                 </div>
             </div>
-            <div class="standings-area">
+            <div class="standings-area active" id="standingsArea">
                 <div class="cutline cutline-playoff"></div>
                 <div class="cutline cutline-playin"></div>
                 <div class="standings-rows" id="standingsRows"></div>
+            </div>
+            <div class="bump-chart" id="bumpChart">
+                <svg class="bump-chart-svg" id="bumpSvg"></svg>
             </div>
         </div>
 
@@ -1041,13 +1176,235 @@
             updateDate(parseInt(e.target.value));
         });
 
-        tabButtons.forEach(btn => {
+        // ── View Toggle ──
+        let currentView = "list";
+        const viewButtons = document.querySelectorAll(".view-btn");
+        const standingsArea = document.getElementById("standingsArea");
+        const bumpChartEl = document.getElementById("bumpChart");
+        const bumpSvg = document.getElementById("bumpSvg");
+        let bumpChartBuiltFor = null;
+
+        viewButtons.forEach(btn => {
             btn.addEventListener("click", () => {
+                viewButtons.forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                currentView = btn.dataset.view;
+                if (currentView === "list") {
+                    standingsArea.classList.add("active");
+                    bumpChartEl.classList.remove("active");
+                } else {
+                    standingsArea.classList.remove("active");
+                    bumpChartEl.classList.add("active");
+                    renderBumpChart();
+                }
+            });
+        });
+
+        // ── Bump Chart ──
+        const BUMP_PADDING = { top: 20, right: 60, bottom: 20, left: 60 };
+        const BUMP_HEIGHT = 680;
+
+        function buildBumpData(conference) {
+            const confData = data[conference];
+            const teams = conference === "east"
+                ? ["ATL","BOS","BRK","CHI","CHO","CLE","DET","IND","MIA","MIL","NYK","ORL","PHI","TOR","WAS"]
+                : ["DAL","DEN","GSW","HOU","LAC","LAL","MEM","MIN","NOP","OKC","PHO","POR","SAC","SAS","UTA"];
+
+            const teamRanks = {};
+            teams.forEach(t => { teamRanks[t] = []; });
+
+            allDates.forEach((date, di) => {
+                const dayData = confData.find(r => r[0] === date);
+                if (!dayData) return;
+                for (let rank = 1; rank < dayData.length; rank++) {
+                    const abbr = dayData[rank];
+                    if (abbr && teamRanks[abbr]) {
+                        teamRanks[abbr].push({ dateIndex: di, rank });
+                    }
+                }
+            });
+
+            return teamRanks;
+        }
+
+        function renderBumpChart() {
+            const cacheKey = currentConference;
+            const svgWidth = bumpSvg.parentElement.clientWidth;
+            const chartWidth = svgWidth - BUMP_PADDING.left - BUMP_PADDING.right;
+            const chartHeight = BUMP_HEIGHT - BUMP_PADDING.top - BUMP_PADDING.bottom;
+
+            bumpSvg.setAttribute("viewBox", `0 0 ${svgWidth} ${BUMP_HEIGHT}`);
+            bumpSvg.innerHTML = "";
+            bumpSvg.classList.remove("has-hover");
+
+            const teamRanks = buildBumpData(currentConference);
+            const totalDates = allDates.length;
+
+            function x(dateIndex) {
+                return BUMP_PADDING.left + (dateIndex / (totalDates - 1)) * chartWidth;
+            }
+
+            function y(rank) {
+                return BUMP_PADDING.top + ((rank - 1) / 14) * chartHeight;
+            }
+
+            // Rank labels on left
+            for (let r = 1; r <= 15; r++) {
+                const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                label.setAttribute("x", BUMP_PADDING.left - 12);
+                label.setAttribute("y", y(r) + 4);
+                label.setAttribute("text-anchor", "end");
+                label.classList.add("bump-rank-label");
+                label.textContent = r;
+                bumpSvg.appendChild(label);
+            }
+
+            // Cutlines
+            [6, 10].forEach((rank, i) => {
+                const lineY = y(rank) + (y(rank + 1) - y(rank)) / 2;
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("x1", BUMP_PADDING.left);
+                line.setAttribute("x2", svgWidth - BUMP_PADDING.right);
+                line.setAttribute("y1", lineY);
+                line.setAttribute("y2", lineY);
+                line.classList.add("bump-cutline");
+                bumpSvg.appendChild(line);
+
+                const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                label.setAttribute("x", svgWidth - BUMP_PADDING.right + 4);
+                label.setAttribute("y", lineY + 4);
+                label.classList.add("bump-cutline-label");
+                label.textContent = i === 0 ? "PLAYOFFS" : "PLAY-IN";
+                bumpSvg.appendChild(label);
+            });
+
+            // Team paths
+            const pathElements = {};
+            const labelElements = {};
+
+            Object.keys(teamRanks).forEach(abbr => {
+                const points = teamRanks[abbr];
+                if (points.length === 0) return;
+
+                // Build path
+                const d = points.map((p, i) => {
+                    const px = x(p.dateIndex);
+                    const py = y(p.rank);
+                    if (i === 0) return `M ${px} ${py}`;
+
+                    // Smooth curve between points
+                    const prev = points[i - 1];
+                    const prevX = x(prev.dateIndex);
+                    const prevY = y(prev.rank);
+                    const cpX = (prevX + px) / 2;
+                    return `C ${cpX} ${prevY} ${cpX} ${py} ${px} ${py}`;
+                }).join(" ");
+
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", d);
+                path.style.stroke = teamColors[abbr];
+                path.classList.add("bump-line");
+                path.dataset.team = abbr;
+                bumpSvg.appendChild(path);
+                pathElements[abbr] = path;
+
+                // Start label
+                const first = points[0];
+                const startLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                startLabel.setAttribute("x", x(first.dateIndex) - 8);
+                startLabel.setAttribute("y", y(first.rank) + 4);
+                startLabel.setAttribute("text-anchor", "end");
+                startLabel.classList.add("bump-label");
+                startLabel.dataset.team = abbr;
+                startLabel.textContent = abbr;
+                bumpSvg.appendChild(startLabel);
+
+                // End label
+                const last = points[points.length - 1];
+                const endLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                endLabel.setAttribute("x", x(last.dateIndex) + 8);
+                endLabel.setAttribute("y", y(last.rank) + 4);
+                endLabel.setAttribute("text-anchor", "start");
+                endLabel.classList.add("bump-label");
+                endLabel.dataset.team = abbr;
+                endLabel.textContent = abbr;
+                bumpSvg.appendChild(endLabel);
+
+                labelElements[abbr] = [startLabel, endLabel];
+            });
+
+            // Date marker line
+            const dateMarker = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            dateMarker.setAttribute("y1", BUMP_PADDING.top - 5);
+            dateMarker.setAttribute("y2", BUMP_HEIGHT - BUMP_PADDING.bottom + 5);
+            dateMarker.classList.add("bump-date-marker");
+            bumpSvg.appendChild(dateMarker);
+
+            // Store reference for updates
+            bumpSvg._dateMarker = dateMarker;
+            bumpSvg._xScale = x;
+            updateBumpDateMarker();
+
+            // Hover interactions
+            function highlightTeam(abbr) {
+                bumpSvg.classList.add("has-hover");
+                Object.keys(pathElements).forEach(t => {
+                    pathElements[t].classList.toggle("highlighted", t === abbr);
+                });
+                Object.keys(labelElements).forEach(t => {
+                    labelElements[t].forEach(l => l.classList.toggle("highlighted", t === abbr));
+                });
+            }
+
+            function clearHighlight() {
+                bumpSvg.classList.remove("has-hover");
+                Object.values(pathElements).forEach(p => p.classList.remove("highlighted"));
+                Object.values(labelElements).forEach(arr => arr.forEach(l => l.classList.remove("highlighted")));
+            }
+
+            bumpSvg.addEventListener("mouseover", (e) => {
+                const team = e.target.dataset?.team;
+                if (team) highlightTeam(team);
+            });
+
+            bumpSvg.addEventListener("mouseout", (e) => {
+                const team = e.target.dataset?.team;
+                if (team) clearHighlight();
+            });
+
+            bumpChartBuiltFor = cacheKey;
+        }
+
+        function updateBumpDateMarker() {
+            if (!bumpSvg._dateMarker || !bumpSvg._xScale) return;
+            const mx = bumpSvg._xScale(currentDateIndex);
+            bumpSvg._dateMarker.setAttribute("x1", mx);
+            bumpSvg._dateMarker.setAttribute("x2", mx);
+        }
+
+        // Patch renderStandings to also update bump chart
+        const _origRenderStandings = renderStandings;
+        renderStandings = function() {
+            _origRenderStandings();
+            if (currentView === "chart") {
+                if (bumpChartBuiltFor !== currentConference) {
+                    renderBumpChart();
+                } else {
+                    updateBumpDateMarker();
+                }
+            }
+        };
+
+        // Update conference switch to rebuild bump chart
+        tabButtons.forEach(btn => {
+            // Re-add listener (overrides previous)
+            btn.onclick = () => {
                 tabButtons.forEach(b => b.classList.remove("active"));
                 btn.classList.add("active");
                 currentConference = btn.dataset.conference;
+                bumpChartBuiltFor = null;
                 renderStandings();
-            });
+            };
         });
 
         // Keyboard shortcuts
@@ -1057,8 +1414,7 @@
             if (e.key === "ArrowRight") { pause(); updateDate(currentDateIndex + 1); }
         });
 
-        // Start on day 1 — only teams present in the data for that date are shown
-
+        // Start on day 1
         renderStandings();
     </script>
 </body>
