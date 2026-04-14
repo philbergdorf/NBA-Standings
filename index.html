@@ -1256,8 +1256,9 @@
         });
 
         // ── Bump Chart ──
-        const BUMP_PADDING = { top: 20, right: 100, bottom: 20, left: 100 };
-        const BUMP_HEIGHT = 680;
+        const BUMP_PADDING = { top: 40, right: 80, bottom: 30, left: 40 };
+        const BUMP_HEIGHT = 700;
+        let bumpState = null; // persistent state for updates without full rebuild
 
         function buildBumpData(conference) {
             const confData = data[conference];
@@ -1282,6 +1283,16 @@
             return teamRanks;
         }
 
+        function getRankAtDate(points, dateIndex) {
+            // Find the rank at or just before dateIndex
+            let rank = null;
+            for (const p of points) {
+                if (p.dateIndex <= dateIndex) rank = p.rank;
+                else break;
+            }
+            return rank;
+        }
+
         function renderBumpChart() {
             const svgWidth = bumpSvg.parentElement.clientWidth;
             const chartWidth = svgWidth - BUMP_PADDING.left - BUMP_PADDING.right;
@@ -1292,22 +1303,33 @@
             bumpSvg.classList.remove("has-hover");
 
             const teamRanks = buildBumpData(currentConference);
-            const startIdx = currentDateIndex;
             const endIdx = allDates.length - 1;
-            const dateSpan = Math.max(1, endIdx - startIdx);
 
             function x(dateIndex) {
-                return BUMP_PADDING.left + ((dateIndex - startIdx) / dateSpan) * chartWidth;
+                return BUMP_PADDING.left + (dateIndex / endIdx) * chartWidth;
             }
 
             function y(rank) {
                 return BUMP_PADDING.top + ((rank - 1) / 14) * chartHeight;
             }
 
+            // Date labels on top
+            const dateLabels = [0, Math.floor(endIdx * 0.25), Math.floor(endIdx * 0.5), Math.floor(endIdx * 0.75), endIdx];
+            dateLabels.forEach(di => {
+                const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                label.setAttribute("x", x(di));
+                label.setAttribute("y", 15);
+                label.setAttribute("text-anchor", "middle");
+                label.classList.add("bump-rank-label");
+                const d = new Date(allDates[di]);
+                label.textContent = `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(2)}`;
+                bumpSvg.appendChild(label);
+            });
+
             // Rank labels on left
             for (let r = 1; r <= 15; r++) {
                 const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                label.setAttribute("x", BUMP_PADDING.left - 12);
+                label.setAttribute("x", BUMP_PADDING.left - 10);
                 label.setAttribute("y", y(r) + 4);
                 label.setAttribute("text-anchor", "end");
                 label.classList.add("bump-rank-label");
@@ -1326,109 +1348,73 @@
                 line.setAttribute("y2", lineY);
                 line.classList.add(isPlayoff ? "bump-cutline-playoff" : "bump-cutline-playin");
                 bumpSvg.appendChild(line);
-
-                const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                label.setAttribute("x", svgWidth - BUMP_PADDING.right + 4);
-                label.setAttribute("y", lineY + 4);
-                label.classList.add(isPlayoff ? "bump-cutline-label-playoff" : "bump-cutline-label-playin");
-                label.textContent = isPlayoff ? "PLAYOFFS" : "PLAY-IN";
-                bumpSvg.appendChild(label);
             });
 
-            // Team paths
+            // Date cursor line
+            const cursorLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            cursorLine.setAttribute("y1", BUMP_PADDING.top - 5);
+            cursorLine.setAttribute("y2", BUMP_HEIGHT - BUMP_PADDING.bottom + 5);
+            cursorLine.style.stroke = "rgba(255,255,255,0.15)";
+            cursorLine.style.strokeWidth = "1";
+            bumpSvg.appendChild(cursorLine);
+
+            // Team paths + logos
             const pathElements = {};
-            const labelElements = {};
+            const logoElements = {};
+            const logoSize = 22;
 
             Object.keys(teamRanks).forEach(abbr => {
-                const points = teamRanks[abbr].filter(p => p.dateIndex >= startIdx);
+                const points = teamRanks[abbr];
                 if (points.length === 0) return;
 
-                // Build path
-                const d = points.map((p, i) => {
+                // Full path (drawn up to current date)
+                const fullD = points.map((p, i) => {
                     const px = x(p.dateIndex);
                     const py = y(p.rank);
                     if (i === 0) return `M ${px} ${py}`;
-
-                    // Smooth curve between points
-                    const prev = points[i - 1];
-                    const prevX = x(prev.dateIndex);
-                    const prevY = y(prev.rank);
-                    const cpX = (prevX + px) / 2;
-                    return `C ${cpX} ${prevY} ${cpX} ${py} ${px} ${py}`;
+                    return `L ${px} ${py}`;
                 }).join(" ");
 
                 const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                path.setAttribute("d", d);
+                path.setAttribute("d", fullD);
                 path.style.stroke = teamColors[abbr];
                 path.classList.add("bump-line");
                 path.dataset.team = abbr;
                 bumpSvg.appendChild(path);
-                pathElements[abbr] = path;
+                pathElements[abbr] = { path, points };
 
-                // Start label (logo + abbr)
-                const first = points[0];
-                const logoSize = 18;
-
-                const startLogo = document.createElementNS("http://www.w3.org/2000/svg", "image");
-                startLogo.setAttribute("href", getLogoUrl(abbr));
-                startLogo.setAttribute("x", x(first.dateIndex) - 28 - logoSize);
-                startLogo.setAttribute("y", y(first.rank) - logoSize / 2);
-                startLogo.setAttribute("width", logoSize);
-                startLogo.setAttribute("height", logoSize);
-                startLogo.classList.add("bump-label");
-                startLogo.dataset.team = abbr;
-                bumpSvg.appendChild(startLogo);
-
-                const startLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                startLabel.setAttribute("x", x(first.dateIndex) - 8);
-                startLabel.setAttribute("y", y(first.rank) + 4);
-                startLabel.setAttribute("text-anchor", "end");
-                startLabel.classList.add("bump-label");
-                startLabel.dataset.team = abbr;
-                startLabel.textContent = abbr;
-                bumpSvg.appendChild(startLabel);
-
-                // End label (abbr + logo)
-                const last = points[points.length - 1];
-                const endLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                endLabel.setAttribute("x", x(last.dateIndex) + 8);
-                endLabel.setAttribute("y", y(last.rank) + 4);
-                endLabel.setAttribute("text-anchor", "start");
-                endLabel.classList.add("bump-label");
-                endLabel.dataset.team = abbr;
-                endLabel.textContent = abbr;
-                bumpSvg.appendChild(endLabel);
-
-                const endLogo = document.createElementNS("http://www.w3.org/2000/svg", "image");
-                endLogo.setAttribute("href", getLogoUrl(abbr));
-                endLogo.setAttribute("x", x(last.dateIndex) + 46);
-                endLogo.setAttribute("y", y(last.rank) - logoSize / 2);
-                endLogo.setAttribute("width", logoSize);
-                endLogo.setAttribute("height", logoSize);
-                endLogo.classList.add("bump-label");
-                endLogo.dataset.team = abbr;
-                bumpSvg.appendChild(endLogo);
-
-                labelElements[abbr] = [startLabel, endLabel, startLogo, endLogo];
+                // Team logo (positioned at current date)
+                const logo = document.createElementNS("http://www.w3.org/2000/svg", "image");
+                logo.setAttribute("href", getLogoUrl(abbr));
+                logo.setAttribute("width", logoSize);
+                logo.setAttribute("height", logoSize);
+                logo.classList.add("bump-label");
+                logo.dataset.team = abbr;
+                logo.style.transition = "x 0.15s ease, y 0.15s ease";
+                bumpSvg.appendChild(logo);
+                logoElements[abbr] = logo;
             });
 
-            bumpChartBuiltFor = currentConference + ":" + currentDateIndex;
+            bumpState = { pathElements, logoElements, teamRanks, x, y, cursorLine, logoSize, endIdx };
+            updateBumpPositions();
+
+            bumpChartBuiltFor = currentConference;
 
             // Hover interactions
             function highlightTeam(abbr) {
                 bumpSvg.classList.add("has-hover");
                 Object.keys(pathElements).forEach(t => {
-                    pathElements[t].classList.toggle("highlighted", t === abbr);
+                    pathElements[t].path.classList.toggle("highlighted", t === abbr);
                 });
-                Object.keys(labelElements).forEach(t => {
-                    labelElements[t].forEach(l => l.classList.toggle("highlighted", t === abbr));
+                Object.keys(logoElements).forEach(t => {
+                    logoElements[t].classList.toggle("highlighted", t === abbr);
                 });
             }
 
             function clearHighlight() {
                 bumpSvg.classList.remove("has-hover");
-                Object.values(pathElements).forEach(p => p.classList.remove("highlighted"));
-                Object.values(labelElements).forEach(arr => arr.forEach(l => l.classList.remove("highlighted")));
+                Object.values(pathElements).forEach(pe => pe.path.classList.remove("highlighted"));
+                Object.values(logoElements).forEach(l => l.classList.remove("highlighted"));
             }
 
             bumpSvg.addEventListener("mouseover", (e) => {
@@ -1440,7 +1426,52 @@
                 const team = e.target.dataset?.team;
                 if (team) clearHighlight();
             });
+        }
 
+        function updateBumpPositions() {
+            if (!bumpState) return;
+            const { pathElements, logoElements, teamRanks, x, y, cursorLine, logoSize, endIdx } = bumpState;
+            const di = currentDateIndex;
+
+            // Update cursor line
+            cursorLine.setAttribute("x1", x(di));
+            cursorLine.setAttribute("x2", x(di));
+
+            // Update each team's path (clip to current date) and logo position
+            Object.keys(teamRanks).forEach(abbr => {
+                const points = teamRanks[abbr];
+                const pe = pathElements[abbr];
+                const logo = logoElements[abbr];
+                if (!pe || !logo) return;
+
+                // Build path only up to current date
+                const visiblePoints = points.filter(p => p.dateIndex <= di);
+                if (visiblePoints.length === 0) {
+                    pe.path.setAttribute("d", "");
+                    logo.style.display = "none";
+                    return;
+                }
+
+                logo.style.display = "";
+
+                const d = visiblePoints.map((p, i) => {
+                    const px = x(p.dateIndex);
+                    const py = y(p.rank);
+                    if (i === 0) return `M ${px} ${py}`;
+                    return `L ${px} ${py}`;
+                }).join(" ");
+
+                pe.path.setAttribute("d", d);
+
+                // Position logo at the end of the visible path (current date rank)
+                const currentRank = getRankAtDate(points, di);
+                if (currentRank !== null) {
+                    const lx = x(di) + 6;
+                    const ly = y(currentRank) - logoSize / 2;
+                    logo.setAttribute("x", lx);
+                    logo.setAttribute("y", ly);
+                }
+            });
         }
 
         // Patch renderStandings to also update bump chart
@@ -1448,16 +1479,16 @@
         renderStandings = function() {
             _origRenderStandings();
             if (currentView === "chart") {
-                const key = currentConference + ":" + currentDateIndex;
-                if (bumpChartBuiltFor !== key) {
+                if (bumpChartBuiltFor !== currentConference) {
                     renderBumpChart();
+                } else {
+                    updateBumpPositions();
                 }
             }
         };
 
         // Update conference switch to rebuild bump chart
         tabButtons.forEach(btn => {
-            // Re-add listener (overrides previous)
             btn.onclick = () => {
                 tabButtons.forEach(b => b.classList.remove("active"));
                 btn.classList.add("active");
